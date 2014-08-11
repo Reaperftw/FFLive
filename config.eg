@@ -1,0 +1,10 @@
+#FFLive Config File! 
+# is treated as a comment
+
+#Configure MySQL Server Address and Login Details (Can be left blank)
+mysqlip=
+mysqluser=
+mysqlpw=
+
+#League IDs that will be stored and updated, separate IDs with commas
+leagueid=
