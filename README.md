@@ -1,4 +1,4 @@
 FFLive
 ======
 
-Live Java Program for updating Fantasy Football leagues from fantasy.premierleague.com
+Java Program for updating Fantasy Football leagues in real time from fantasy.premierleague.com
