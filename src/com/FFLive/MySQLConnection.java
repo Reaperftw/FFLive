@@ -306,12 +306,12 @@ public class MySQLConnection {
 			leaguesInsert.executeUpdate();
 
 			//statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + leagues_teamsGW + " (leagueID INT NOT NULL, managerID INT NOT NULL, op INT, lp INT, position INT, wins INT, loss INT, draw INT, points FLOAT, UNIQUE (leagueID, managerID))");
-			PreparedStatement CTleagueTeamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS " + leagues_teamsGW + " (leagueID INT NOT NULL, managerID INT NOT NULL, lp INT, position INT, wins INT, loss INT, draw INT, points INT, fixture VARCHAR(2), UNIQUE (leagueID, managerID))");
+			PreparedStatement CTleagueTeamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS " + leagues_teamsGW + " (leagueID INT NOT NULL, managerID INT NOT NULL, lp INT DEFAULT 0, position INT, wins INT DEFAULT 0, loss INT DEFAULT 0, draw INT DEFAULT 0, points INT DEFAULT 0, fixture VARCHAR(2), UNIQUE (leagueID, managerID))");
 			//CTleagueTeamsGW.setsetString(1, leagues_teamsGW);
 			CTleagueTeamsGW.executeUpdate();
 
 			//statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + teamsGW + " (managerID INT NOT NULL UNIQUE, teamName VARCHAR(25), managerName VARCHAR(120), GkID INT, DefID1 INT, DefID2 INT, DefID3 INT, DefID4 INT, DefID5 INT, MidID1 INT, MidID2 INT, MidID3 INT, MidID4 INT, MidID5 INT, ForID1 INT, ForID2 INT, ForID3 INT, BenchID1 INT, BenchID2 INT, BenchID3 INT, BenchID4 INT, captainID INT, viceCaptainID INT)");
-			PreparedStatement CTteamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS " + teamsGW + " (managerID INT NOT NULL UNIQUE, teamName VARCHAR(25), managerName VARCHAR(120), op INT, gw INT, GkID INT, DefID1 INT, DefID2 INT, DefID3 INT, DefID4 INT, DefID5 INT, MidID1 INT, MidID2 INT, MidID3 INT, MidID4 INT, MidID5 INT, ForID1 INT, ForID2 INT, ForID3 INT, BenchID1 INT, BenchID2 INT, BenchID3 INT, BenchID4 INT, captainID INT, viceCaptainID INT)");
+			PreparedStatement CTteamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS " + teamsGW + " (managerID INT NOT NULL UNIQUE, teamName VARCHAR(25), managerName VARCHAR(120), op INT DEFAULT 0, gw INT, GkID INT, DefID1 INT, DefID2 INT, DefID3 INT, DefID4 INT, DefID5 INT, MidID1 INT, MidID2 INT, MidID3 INT, MidID4 INT, MidID5 INT, ForID1 INT, ForID2 INT, ForID3 INT, BenchID1 INT, BenchID2 INT, BenchID3 INT, BenchID4 INT, captainID INT, viceCaptainID INT)");
 			//CTteamsGW.setString(1, teamsGW);
 			CTteamsGW.executeUpdate();
 
@@ -384,12 +384,12 @@ public class MySQLConnection {
 			leaguesInsert.executeUpdate();
 
 			//statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + leagues_teamsGW + " (leagueID INT NOT NULL, managerID INT NOT NULL, op INT, lp INT, position INT, wins INT, loss INT, draw INT, points FLOAT, UNIQUE (leagueID, managerID))");
-			PreparedStatement CTleagueTeamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS " + leagues_teamsGW + " (leagueID INT NOT NULL, managerID INT NOT NULL, lp INT, position INT, wins INT, loss INT, draw INT, points INT, fixture VARCHAR(2), UNIQUE (leagueID, managerID))");
+			PreparedStatement CTleagueTeamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS " + leagues_teamsGW + " (leagueID INT NOT NULL, managerID INT NOT NULL, lp INT DEFAULT 0, position INT, wins INT DEFAULT 0, loss INT DEFAULT 0, draw INT DEFAULT 0, points INT DEFAULT 0, fixture VARCHAR(2), UNIQUE (leagueID, managerID))");
 			//CTleagueTeamsGW.setsetString(1, leagues_teamsGW);
 			CTleagueTeamsGW.executeUpdate();
 
 			//statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + teamsGW + " (managerID INT NOT NULL UNIQUE, teamName VARCHAR(25), managerName VARCHAR(120), GkID INT, DefID1 INT, DefID2 INT, DefID3 INT, DefID4 INT, DefID5 INT, MidID1 INT, MidID2 INT, MidID3 INT, MidID4 INT, MidID5 INT, ForID1 INT, ForID2 INT, ForID3 INT, BenchID1 INT, BenchID2 INT, BenchID3 INT, BenchID4 INT, captainID INT, viceCaptainID INT)");
-			PreparedStatement CTteamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS " + teamsGW + " (managerID INT NOT NULL UNIQUE, teamName VARCHAR(25), managerName VARCHAR(120), op INT, gw INT, GkID INT, DefID1 INT, DefID2 INT, DefID3 INT, DefID4 INT, DefID5 INT, MidID1 INT, MidID2 INT, MidID3 INT, MidID4 INT, MidID5 INT, ForID1 INT, ForID2 INT, ForID3 INT, BenchID1 INT, BenchID2 INT, BenchID3 INT, BenchID4 INT, captainID INT, viceCaptainID INT)");
+			PreparedStatement CTteamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS " + teamsGW + " (managerID INT NOT NULL UNIQUE, teamName VARCHAR(25), managerName VARCHAR(120), op INT DEFAULT 0, gw INT, GkID INT, DefID1 INT, DefID2 INT, DefID3 INT, DefID4 INT, DefID5 INT, MidID1 INT, MidID2 INT, MidID3 INT, MidID4 INT, MidID5 INT, ForID1 INT, ForID2 INT, ForID3 INT, BenchID1 INT, BenchID2 INT, BenchID3 INT, BenchID4 INT, captainID INT, viceCaptainID INT)");
 			//CTteamsGW.setString(1, teamsGW);
 			CTteamsGW.executeUpdate();
 
@@ -644,7 +644,7 @@ public class MySQLConnection {
 			SManId.setInt(1, gameweek);
 			ResultSet teams = SManId.executeQuery();
 
-			String[] positions = {"GkID","DefID1","DefID2","DefID3","DefID4","DefID5","MidID1","MidID2","MidID3","MidID4","MidID5","ForID1","ForID2","ForID3","BenchID1","BenchID2","BenchID3","BenchID4"};
+			String[] positions = {"GkID","DefID1","DefID2","DefID3","DefID4","DefID5","MidID1","MidID2","MidID3","MidID4","MidID5","ForID1","ForID2","ForID3"};
 			while(teams.next()) {
 				int manId = teams.getInt("managerID");
 				int gwScore = 0;
@@ -662,6 +662,35 @@ public class MySQLConnection {
 					}
 					Splayers.close();
 				}
+				//Adds on the captain score again, unless 0 then it adds on the vice captain score (assuming that 0 means he has not played, will make this based on mins played at a later date.
+				PreparedStatement captain = conn.prepareStatement("SELECT score from playersGW? JOIN teamsGW? on playersGW?.playerid = teamsGW?.captainID WHERE managerID = ?");
+				captain.setInt(1, gameweek);
+				captain.setInt(2, gameweek);
+				captain.setInt(3, gameweek);
+				captain.setInt(4, gameweek);
+				captain.setInt(5, manId);
+				ResultSet RSScore = captain.executeQuery();
+				while(RSScore.next()) {
+					int capScore = RSScore.getInt("score");
+					if (capScore == 0) {
+						PreparedStatement viceCap = conn.prepareStatement("SELECT score from playersGW? JOIN teamsGW? on playersGW?.playerid = teamsGW?.viceCaptainID WHERE managerID = ?");
+						viceCap.setInt(1, gameweek);
+						viceCap.setInt(2, gameweek);
+						viceCap.setInt(3, gameweek);
+						viceCap.setInt(4, gameweek);
+						viceCap.setInt(5, manId);
+						ResultSet RSViceScore = viceCap.executeQuery();
+						while(RSViceScore.next()){
+							gwScore += RSScore.getInt("score");
+						}
+						viceCap.close();
+					}
+					else {
+						gwScore += capScore;
+					}
+				}
+				RSScore.close();
+				
 				PreparedStatement UScore = conn.prepareStatement("UPDATE teamsGW? set gw = ? where managerID = ?");
 				UScore.setInt(1, gameweek);
 				UScore.setInt(2, gwScore);

@@ -16,7 +16,10 @@ public class Main {
 
 
 	public static void main(String[] args) {
-
+		
+		//TODO Via MINS Played, move peope off the bench correctly
+		//TODO Clean up error handling
+		
 		//Program Args
 		String ipaddr = "localhost:3306";
 		String username = "";
