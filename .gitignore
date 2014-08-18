@@ -44,3 +44,4 @@ hs_err_pid*
 
 #cfg Files
 *.cfg
+stop.txt
