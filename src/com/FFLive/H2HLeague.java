@@ -1,6 +1,28 @@
+/*
+ * FFLive - Java program to scrape information from http://fantasy.premierleague.com/ 
+ * and display it with real time updating leagues.
+ * 
+ * Copyright (C) 2014  Matt Croydon
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *  
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.FFLive;
 
 import java.io.IOException;
+import java.net.ConnectException;
+import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
@@ -52,121 +74,135 @@ public class H2HLeague {
 			//Checks for H2H League
 			if (leagueTable.isEmpty()) {
 				System.err.println("This League either contains no teams or the season has not yet begun!");
-				System.exit(202);
+
 			}
-			//Pulls the links for the team names out of the table
-			Elements managerID = leagueTable.select("a[href]");
-			//Takes the Table Sections for Scores
-			Elements tableRows = leagueTable.select("tr");
-			//Gets League Name Section
-			Elements lName = leaguePage.getElementsByClass("ismTabHeading");
+			else {
+				//Pulls the links for the team names out of the table
+				Elements managerID = leagueTable.select("a[href]");
+				//Takes the Table Sections for Scores
+				Elements tableRows = leagueTable.select("tr");
+				//Gets League Name Section
+				Elements lName = leaguePage.getElementsByClass("ismTabHeading");
 
-			leagueName = lName.text();
-			System.out.println("Loaded League: " + lName.text());
+				leagueName = lName.text();
+				System.out.println("Loaded League: " + lName.text());
 
-			//Works Out Gameweek
-			gameweek = managerID.attr("href").split("/")[4];
+				//Works Out Gameweek
+				gameweek = managerID.attr("href").split("/")[4];
 
-			System.out.println("The Current Gameweek is " + gameweek);
-			System.out.print("Loading Managers...  ");
+				System.out.println("The Current Gameweek is " + gameweek);
+				System.out.print("Loading Managers...  ");
 
-			//To Save Reloading the Page later, passes forward the league score and ManagerIDs
+				//To Save Reloading the Page later, passes forward the league score and ManagerIDs
 
 
-			String managerIDTemp = null;
+				String managerIDTemp = null;
 
-			for (Element tableRow : tableRows) {
-				Elements tableSections = tableRow.select("td");
-				String[] tempScores = new String [6];
-				int counter = 0;
+				for (Element tableRow : tableRows) {
+					Elements tableSections = tableRow.select("td");
+					String[] tempScores = new String [6];
+					int counter = 0;
 
-				for (Element el : tableSections) {
-					counter++;
-					if (counter%8 == 2) {
-						//Position
-						tempScores[0] = el.text().replaceAll("\\D+","");
-					}
-					if (counter%8 == 3) {
-						//Team ID
-						if (el.text().equals("Average")) {
-							managerIDTemp="Average";
+					for (Element el : tableSections) {
+						counter++;
+						if (counter%8 == 2) {
+							//Position
+							tempScores[0] = el.text().replaceAll("\\D+","");
 						}
-						else {
-							//ManagerIds in the link in the 3rd Column (of 6)
-							String[] linkSegments = el.select("a").attr("href").split("/");
-							managerIDTemp = linkSegments[2];
+						if (counter%8 == 3) {
+							//Team ID
+							if (el.text().equals("Average")) {
+								managerIDTemp="Average";
+							}
+							else {
+								//ManagerIds in the link in the 3rd Column (of 6)
+								String[] linkSegments = el.select("a").attr("href").split("/");
+								managerIDTemp = linkSegments[2];
+							}
+						}
+						if (counter%8 == 4) {
+							//Wins
+							tempScores[1] = el.text().replaceAll("\\D+","");
+						}
+						if (counter%8 == 5) {
+							//Draws
+							tempScores[2] = el.text().replaceAll("\\D+","");
+						}
+						if (counter%8 == 6) {
+							//Losses
+							tempScores[3] = el.text().replaceAll("\\D+","");
+						}
+						if (counter%8 == 7) {
+							//LP
+							tempScores[4] = el.text().replaceAll("\\D+","");
+						}
+						if (counter%8 == 0) {
+							//Score and add to Map
+							tempScores[5] = el.text().replaceAll("\\D+","");
+							allScoreMap.put(managerIDTemp, tempScores);
 						}
 					}
-					if (counter%8 == 4) {
-						//Wins
-						tempScores[1] = el.text().replaceAll("\\D+","");
-					}
-					if (counter%8 == 5) {
-						//Draws
-						tempScores[2] = el.text().replaceAll("\\D+","");
-					}
-					if (counter%8 == 6) {
-						//Losses
-						tempScores[3] = el.text().replaceAll("\\D+","");
-					}
-					if (counter%8 == 7) {
-						//LP
-						tempScores[4] = el.text().replaceAll("\\D+","");
-					}
-					if (counter%8 == 0) {
-						//Score and add to Map
-						tempScores[5] = el.text().replaceAll("\\D+","");
-						allScoreMap.put(managerIDTemp, tempScores);
-					}
 				}
+
+				for (Entry<String,String[]> entry: allScoreMap.entrySet()) {
+					addH2HManager(entry.getKey(), gameweek, entry.getValue());
+				}
+
+				System.out.print("Managers Loaded, Loading Fixtures...  ");
+
+				Element fixtureTable = leaguePage.select("table.ismTable.ismH2HFixTable").first();
+				Elements fixtures = fixtureTable.select("tr");
+				if(fixtures.size() > 25) {
+					System.out.println("");
+					System.err.print("This Program Does Not Currently Support Leagues Longer Than 1 Page...");
+					System.exit(51);
+				}
+				for (Element el: fixtures) {
+					String homeID = el.select("td.ismHome").select("a").attr("href");
+					String awayID = el.select("td.ismAway").select("a").attr("href");
+
+					if(homeID.equals("")) {
+						homeID="Average";
+					}
+					else {
+						homeID = homeID.split("/")[2];
+					}
+
+					if(awayID.equals("")) {
+						awayID="Average";
+					}
+					else {
+						awayID = awayID.split("/")[2];
+					}
+					fixtureMap.put(homeID, awayID);
+				}
+				System.out.println("Done!");
+
 			}
-
-			for (Entry<String,String[]> entry: allScoreMap.entrySet()) {
-				addH2HManager(entry.getKey(), gameweek, entry.getValue());
-			}
-
-			System.out.print("Managers Loaded, Loading Fixtures...  ");
-
-			Element fixtureTable = leaguePage.select("table.ismTable.ismH2HFixTable").first();
-			Elements fixtures = fixtureTable.select("tr");
-			if(fixtures.size() > 25) {
-				System.out.println("");
-				System.err.print("This Program Does Not Currently Support Leagues Longer Than 1 Page...");
-				System.exit(51);
-			}
-			for (Element el: fixtures) {
-				String homeID = el.select("td.ismHome").select("a").attr("href");
-				String awayID = el.select("td.ismAway").select("a").attr("href");
-
-				if(homeID.equals("")) {
-					homeID="Average";
-				}
-				else {
-					homeID = homeID.split("/")[2];
-				}
-
-				if(awayID.equals("")) {
-					awayID="Average";
-				}
-				else {
-					awayID = awayID.split("/")[2];
-				}
-				fixtureMap.put(homeID, awayID);
-			}
-			System.out.println("Done!");
-
 		}
-		catch (SocketTimeoutException e) {
+		catch (ConnectException c) {
 			if (timeoutCheck() > 10) {
 				System.err.println("Too Many Timeouts... Quitting");
-				System.exit(26);
+				System.exit(506);
 			}
 			System.out.println("Timeout Connecting. Retrying...");
 			loadH2HLeague();
 		}
+		catch (SocketTimeoutException e) {
+			if (timeoutCheck() > 10) {
+				System.err.println("Too Many Timeouts... Quitting");
+				System.exit(502);
+			}
+			System.out.println("Timeout Connecting. Retrying...");
+			loadH2HLeague();
+		}
+		catch (NoRouteToHostException h) {
+			System.err.println("No Connection... Quitting");
+			System.exit(505);
+		}
 		catch (UnknownHostException g) {
 			System.err.println("No Connection... Quitting");
-			System.exit(25);
+			System.exit(501);
 		}
 		catch (IOException f) {
 			System.err.println("--In loadH2HLeague: " + f);

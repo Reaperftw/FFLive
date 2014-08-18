@@ -1,3 +1,23 @@
+/*
+ * FFLive - Java program to scrape information from http://fantasy.premierleague.com/ 
+ * and display it with real time updating leagues.
+ * 
+ * Copyright (C) 2014  Matt Croydon
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *  
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package com.FFLive;
 
 import java.io.BufferedReader;
@@ -17,13 +37,18 @@ public class Main {
 
 	public static void main(String[] args) {
 		
-		//TODO Via MINS Played, move peope off the bench correctly
+		//TODO Via MINS Played, move people off the bench correctly
 		//TODO Clean up error handling
+		//TODO Position
 		
+		
+
+		 
 		//Program Args
 		String ipaddr = "localhost:3306";
 		String username = "";
 		String passwd = "";
+		String database = "FFLive";
 		//String[] leagueIDs = null;
 		ArrayList<String> leagueIDs = new ArrayList<String>();
 		//String gameweek = null;
@@ -31,7 +56,7 @@ public class Main {
 		//Initial open
 		Calendar currentDate = Calendar.getInstance();
 		System.out.println("");
-		System.out.println("FFLive v3.0 - Started " + currentDate.getTime());
+		System.out.println("FFLive v3.0.3 - Started " + currentDate.getTime());
 		System.out.print("Loading Config...  ");
 
 		//Load Config File
@@ -70,6 +95,9 @@ public class Main {
 			if (arguments.containsKey("mysqlpw")) {
 				passwd = arguments.get("mysqlpw");
 			}
+			if (arguments.containsKey("database")) {
+				database = arguments.get("database");
+			}
 			if (arguments.containsKey("leagueid")) {
 				for (String ID: arguments.get("leagueid").split(",")) {
 					leagueIDs.add(ID);
@@ -90,10 +118,13 @@ public class Main {
 				configWrite.write("#FFLive Config File! \r\n"
 						+ "# is treated as a comment\r\n"
 						+ "\r\n"
-						+ "#Configure MySQL Server Address:Port and Login Details (Can be left blank)\r\n"
+						+ "#Configure MySQL Server Address:Port and Login Details (Can be left blank), and the name of the database you want to make/use.\r\n"
+						+ "#Make sure your defined user has permissions to at least USE,SELECT,UPDATE,INSERT.\r\n"
+						+ "#Default Server is localhost:3306 with no username or password\r\n"
 						+ "mysqlip=\r\n"
 						+ "mysqluser=\r\n"
 						+ "mysqlpw=\r\n"
+						+ "database=\r\n"
 						+ "\r\n"
 						+ "#League IDs that will be stored and updated, separate IDs with commas\r\n"
 						+ "leagueid=");
@@ -115,19 +146,18 @@ public class Main {
 
 
 		//Open - Connect to and Check DB if data stored, check in current GW and update or end current GW and prep for next GW. Else setup for first run
-		MySQLConnection dbAccess = new MySQLConnection(ipaddr, username, passwd);
-
+		MySQLConnection dbAccess = new MySQLConnection(ipaddr, username, passwd, database);
+		
 		//Add Config Passed LeagueIDs to status DB
-		//dbAccess.addStatus(leagueIDs);
+		dbAccess.addStatus(leagueIDs);
 		boolean repeat = true;
-
+		
 		Leagues live = new Leagues();
-		Leagues post = new Leagues();
 		//boolean needToPost = false;
 		boolean goLive = false;
 		String gameweek = "0";
 
-
+		
 		while(repeat) {
 			repeat = false;
 			boolean wait = false;
@@ -140,7 +170,7 @@ public class Main {
 				for(Entry<String,String> entry : incomplete.entrySet()) {
 					String type = entry.getValue();
 					
-
+					dbAccess.setWebFront("index", "Checking for Updates");
 					if (type.equals("post")) {
 						
 						String gw = entry.getKey().split(",")[1];
@@ -153,11 +183,13 @@ public class Main {
 						}
 						else {
 							System.out.print("Processing Post GW Updates for " + leagueID + "...  ");
+							Leagues post = new Leagues();
 							post.addLeague(leagueID);
-							post.postUpdate(gw, dbAccess);
+							dbAccess.postUpdate(gw, post);
 							System.out.println("Done!");
 							
 						}
+						repeat = true;
 					}
 					else if (type.equals("teams")) {
 						
@@ -169,7 +201,8 @@ public class Main {
 							System.out.println("Loading Teams for " + leagueID + " for GW:" + gw + "...");
 							Leagues teams = new Leagues();
 							teams.addLeague(leagueID);
-							teams.teamUpdate(gw, dbAccess);
+							dbAccess.teamUpdate(gw, teams);
+							repeat = true;
 						}
 						else {
 							System.out.println("Removing " + leagueID + " from the Update List, as it is not in the config...  ");
@@ -209,25 +242,45 @@ public class Main {
 			
 			if (wait) {
 				try {
+
+					dbAccess.setWebFront("index", "Waiting for Day to Start");
 					Thread.sleep(120000);
 				} catch (InterruptedException e) {
 					System.err.println(e);
 					break;
 				}
+				if (new File("stop.txt").exists()) {
+					System.out.print("Trigger File found, exiting...  ");
+					break;
+				}
 			}
 		}
-
-
+	
 		if (goLive) {
+			Calendar endOfDay = Calendar.getInstance();
+			Calendar early = Calendar.getInstance();
+			Calendar now = Calendar.getInstance();
+			endOfDay.set(Calendar.HOUR_OF_DAY, 22);
+			endOfDay.set(Calendar.MINUTE, 0);
+			early.set(Calendar.HOUR_OF_DAY, 8);
+			early.set(Calendar.MINUTE, 0);
+			
 			if (new File("stop.txt").exists()) {
-				System.out.print("Trigger File found, exiting...  ");
+				//System.out.print("Trigger File found, exiting...  ");
+			}
+			else if (now.after(endOfDay)) {
+				//Don't go live, started the program late
+			}
+			else if (now.before(early)) {
+				//It is sometime between midnight and morning, again no point running.
 			}
 			else {
+				
+				
+				dbAccess.setWebFront("index", "Live Updating");
 				System.out.print("Starting Live Update for all Selected Leagues...  ");
-				Calendar endOfDay = Calendar.getInstance();
-				endOfDay.set(Calendar.HOUR_OF_DAY, 22);
-				endOfDay.set(Calendar.MINUTE, 0);
-				System.out.println("Live Running Until" + endOfDay.getTime() + ", or End program by creating stop.txt in this directory... ");
+				
+				System.out.println("Live Running Until " + endOfDay.getTime() + ", or End program by creating stop.txt in this directory... ");
 				while (Calendar.getInstance().before(endOfDay)) {
 					dbAccess.generatePlayerList(gameweek);
 					dbAccess.updatePlayers(gameweek);
@@ -246,7 +299,41 @@ public class Main {
 				}
 			}
 		}
+		else {
+			System.out.println("All Updates Complete and currently not time to go live!");
+		}
+		
 
+		//H2HLeague test = new H2HLeague(28716);
+		//test.loadH2HLeague();
+		//test.loadTeams();
+		//dbAccess.storeLeague(test);
+		//dbAccess.storeLeagueData(test);
+		//dbAccess.generatePlayerList("1");
+		//dbAccess.updatePlayers("1");
+		//dbAccess.updateScores("1");
+		
+		/*
+		ClassicLeague league = new ClassicLeague(27611);
+		league.loadLeague();
+		league.loadTeams();
+		dbAccess.storeLeague(league);
+		dbAccess.storeLeagueData(league);
+		
+		H2HLeague league2 = new H2HLeague(28716);
+		league2.loadH2HLeague();
+		league2.loadTeams();
+		dbAccess.storeLeague(league2);
+		dbAccess.storeLeagueData(league2);
+		
+		dbAccess.generatePlayerList("1");
+		dbAccess.updatePlayers("1");
+		dbAccess.updateScores("1");
+		
+		
+		String gameweek = "1";
+		boolean goLive = true;
+		*/
 		/*
 		ClassicLeague league = new ClassicLeague(27611);
 		league.loadLeague();
@@ -294,13 +381,14 @@ public class Main {
 		dbAccess.storeTeamData(test);
 		dbAccess.storeTeamData(test2);
 		dbAccess.generatePlayerList("1");
-		dbAccess.updatePlayers(league.gameWeek);
-		 */
-
-
+		//dbAccess.updatePlayers("1");
+		//dbAccess.updateScores("1");
+		*/
+		
+		dbAccess.setWebFront("index", "Up To Date");
 		dbAccess.closeConnections();
 		System.out.println("Finished running Live Leagues!");
-
+	
 		/*System.out.print("Arguments Provided:");
 		for (String temp: args) {
 			System.out.print(" " + temp);

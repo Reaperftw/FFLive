@@ -1,9 +1,30 @@
+/*
+ * FFLive - Java program to scrape information from http://fantasy.premierleague.com/ 
+ * and display it with real time updating leagues.
+ * 
+ * Copyright (C) 2014  Matt Croydon
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *  
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package com.FFLive;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.ConnectException;
 import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
@@ -25,6 +46,7 @@ public class Player {
 	public String position = null;
 	public int playerScore = 0;
 	public String scoreBreakdown = null;
+	public String gameweekBreakdown = null;
 	public String currentFixture = null;
 	public String nextFixture = null;
 	public String status = null;
@@ -58,6 +80,7 @@ public class Player {
 			String all = test.get("all").toString();
 			*/
 			playerScore = Integer.parseInt(playerValues.get("event_total").toString());
+			gameweekBreakdown = playerValues.get("event_explain").toString();
 			scoreBreakdown = playerValues.get("fixture_history").toString();
 			currentFixture = playerValues.get("current_fixture").toString();
 			nextFixture = playerValues.get("next_fixture").toString();
@@ -80,6 +103,14 @@ public class Player {
 			System.out.println(status);
 			System.out.println(news);
 			System.out.println(photo);*/
+		}
+		catch(ConnectException c) {
+			if(timeoutCheck() > 3) {
+				System.err.println("Too Many Timeouts.. Quitting");
+				System.exit(406);
+			}
+			System.out.println("Timeout Connecting, Retrying...");
+			getPlayer();
 		}
 		catch(SocketTimeoutException e) {
 			if(timeoutCheck() > 3) {

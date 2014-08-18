@@ -1,6 +1,27 @@
+/*
+ * FFLive - Java program to scrape information from http://fantasy.premierleague.com/ 
+ * and display it with real time updating leagues.
+ * 
+ * Copyright (C) 2014  Matt Croydon
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *  
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package com.FFLive;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -51,7 +72,14 @@ public class Fixtures {
 			
 			
 		}
-
+		catch (ConnectException c) {
+			if (timeoutCheck() > 10) {
+				System.err.println("Too Many Timeouts... Quitting");
+				System.exit(1103);
+			}
+			System.out.println("Timeout Connecting. Retrying...");
+			loadFixtures();
+		}
 		catch (SocketTimeoutException e) {
 			if (timeoutCheck() > 10) {
 				System.err.println("Too Many Timeouts... Quitting");

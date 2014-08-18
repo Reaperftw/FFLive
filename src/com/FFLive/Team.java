@@ -1,7 +1,30 @@
+/*
+ * FFLive - Java program to scrape information from http://fantasy.premierleague.com/ 
+ * and display it with real time updating leagues.
+ * 
+ * Copyright (C) 2014  Matt Croydon
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *  
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package com.FFLive;
 
 import java.io.IOException;
+import java.net.ConnectException;
+import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -21,7 +44,7 @@ public class Team {
 	public String[] defenders = {null, null, null, "0", "0"};
 	public String[] midfield = {null, null, "0", "0", "0",};
 	public String[] forwards = {null, "0", "0"};
-	public String[] bench = {null, null, null, null};
+	public String[] bench = {"0", "0", "0", "0"};
 	public String[] captains = {null, null};
 	public String managerID;
 	public String GW;
@@ -35,7 +58,6 @@ public class Team {
 	public int loss = 0;
 	public int draw = 0;
 	public int gameWeekScore;
-	public boolean H2H = false;
 	private int timeout = 0;
 
 	public Team(String manID, String gameWeek, String leaguePoints, String lPosition) {
@@ -54,7 +76,6 @@ public class Team {
 		draw = Integer.parseInt(draws);
 		h2hScore = Integer.parseInt(H2HScore);
 		position = Integer.parseInt(lPosition);
-		H2H = true;
 	}
 
 	public void getTeam() {
@@ -88,7 +109,8 @@ public class Team {
 				for (int rowNumber = 1; rowNumber < 6; rowNumber++) {
 					String rowClass = "ismPitchRow" + rowNumber;
 					//Selects the individual row and then selects all the pitch boxes on that row
-					Elements pitchRowPlayerBoxes = doc.getElementsByClass(rowClass).select("div.ismPlayerContainer");
+					Elements pitchRowPlayerBoxes = doc.select("div." + rowClass).select("div.ismPitchElement");
+					
 					
 					int c = 0;
 					
@@ -97,11 +119,11 @@ public class Team {
 						//Selects the required sections within the pitch box
 
 						//Gets the Website Player ID
-						String playerID = el.select("span.JS_ISM_INFO.a").attr("href").replaceAll("\\D+","");
+						String playerID = el.select("a.JS_ISM_INFO").attr("href").replaceAll("\\D+","");
 
 						Elements playerBoxCaptain = el.select("img.ismCaptain.ismCaptainOn");
 						Elements playerBoxVice = el.select("img.ismViceCaptain.ismViceCaptainOn");
-
+						
 						//String captain = new String();
 
 						//Checks for the Captain or Vice Captain Tags and adds it to the captain array
@@ -144,18 +166,35 @@ public class Team {
 				System.out.println("Done!");
 			}
 		}
-		catch(SocketTimeoutException e) {
+		catch (ConnectException c) {
 			if(timeoutCheck() > 4) {
 				System.err.println("Too Many Timeouts.. Quitting");
-				System.exit(30);
+				System.exit(301);
 			}
 			System.out.println("-- Timeout Connecting, Retrying...");
 			getTeam();
 		}
+		catch(SocketTimeoutException e) {
+			if(timeoutCheck() > 4) {
+				System.err.println("Too Many Timeouts.. Quitting");
+				System.exit(300);
+			}
+			System.out.println("-- Timeout Connecting, Retrying...");
+			getTeam();
+		}
+		catch (UnknownHostException g) {
+			System.err.println("No Connection... Quitting");
+			System.exit(305);
+		}
+		catch (NoRouteToHostException h) {
+			System.err.println("No Connection... Quitting");
+			System.exit(306);
+		}
 		catch(IOException f) {
 			System.err.println("-- In addPlayers: " + f);
-			System.exit(31);
+			System.exit(302);
 		}
+		
 	}
 
 	public int timeoutCheck() {

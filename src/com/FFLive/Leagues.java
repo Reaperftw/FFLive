@@ -1,6 +1,27 @@
+/*
+ * FFLive - Java program to scrape information from http://fantasy.premierleague.com/ 
+ * and display it with real time updating leagues.
+ * 
+ * Copyright (C) 2014  Matt Croydon
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *  
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package com.FFLive;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -27,7 +48,7 @@ public class Leagues {
 	public void addLeague(String leagueID) {
 		//Takes a league ID, loads the page and checks if it is a H2H League or a Classic League
 		try {
-			System.out.print("Adding League" + leagueID + "...  ");
+			System.out.print("Adding League " + leagueID + "...  ");
 			String URL = ("http://fantasy.premierleague.com/my-leagues/" + leagueID + "/standings/");
 			Document leaguePage = Jsoup.connect(URL).get();
 
@@ -66,6 +87,14 @@ public class Leagues {
 				System.out.println("This League either contains no teams or the season has not yet begun!");
 			}
 		}
+		catch (ConnectException c) {
+			if (timeoutCheck() > 10) {
+				System.err.println("Too Many Timeouts... Quitting");
+				System.exit(102);
+			}
+			System.out.println("Timeout Connecting. Retrying...");
+			addLeague(leagueID);
+		}
 		catch (SocketTimeoutException e) {
 			if (timeoutCheck() > 10) {
 				System.err.println("Too Many Timeouts... Quitting");
@@ -91,7 +120,7 @@ public class Leagues {
 			//System.exit(3);
 		}
 	}
-	
+	/*
 	public void postUpdate (String gameweek, MySQLConnection sql) {
 		for (ClassicLeague CL: classicLeague) {
 			CL.loadLeague();
@@ -121,7 +150,7 @@ public class Leagues {
 			sql.teamsUpdateStatus(H2H.leagueID, Gameweek);
 		}
 	}
-	
+	*/
 	public int timeoutCheck() {
 		this.timeout++;
 		return this.timeout;
