@@ -37,11 +37,11 @@ import org.jsoup.select.Elements;
 
 public class H2HLeague {
 
-	public TreeMap<String, String> fixtureMap = null;
+	public Map<String, String> fixtureMap = null;
 	public Map<String, Team> managerMap = null;
 	//public TreeMap<Integer,String[][]> liveH2HTable = null;
-	public TreeMap<Integer,Team[]> liveH2HTeamTable = null;
-	public TreeMap<String,String[]> allScoreMap = null;
+	public Map<Integer,Team[]> liveH2HTeamTable = null;
+	public Map<String,String[]> allScoreMap = null;
 	public String[][] liveH2HFixtures = null;
 	private int timeout = 0;
 	private static final int maxH2HManagers = 50;

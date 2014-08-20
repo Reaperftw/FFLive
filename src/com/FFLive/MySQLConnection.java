@@ -29,6 +29,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException;
@@ -159,10 +161,11 @@ public class MySQLConnection {
 		}
 	}
 
-	public HashMap<String, String> statusCheck() {
+	public Map<String, List<String>> statusCheck() {
 		System.out.print("Checking Status of Stored Leagues...  ");
-		HashMap<String,String> incomplete = new HashMap<String,String>();
+		Map<String,List<String>> incomplete = new HashMap<String,List<String>>();
 
+		
 		try {
 			//Check the status table
 			Statement statement = conn.createStatement();
@@ -187,7 +190,15 @@ public class MySQLConnection {
 				if (status.getString("started").equals("Y")) {
 
 					if(status.getString("teamsStored").equals("N")) {
-						incomplete.put(leagueID + "," + gw, "teams");
+						if(!incomplete.containsKey("teams")) {
+							List<String> teams = new ArrayList<String>();
+							teams.add(leagueID + "," + gw);
+							incomplete.put("teams",teams);
+						}
+						else {
+							incomplete.get("teams").add(leagueID + "," + gw);
+						}
+						
 					}
 					//Gameweek has started, check if it has ended
 					else if(status.getString("ended").equals("Y")) {
@@ -200,7 +211,14 @@ public class MySQLConnection {
 
 							if (now.after(postTime)){
 								//Gameweek complete but mark for post-update.
-								incomplete.put(leagueID + "," + gw, "post");
+								if(!incomplete.containsKey("post")) {
+									List<String> post = new ArrayList<String>();
+									post.add(leagueID + "," + gw);
+									incomplete.put("post",post);
+								}
+								else {
+									incomplete.get("post").add(leagueID + "," + gw);
+								}
 							}
 							else {
 								//Gameweek Finished but too soon after last game
@@ -224,14 +242,28 @@ public class MySQLConnection {
 
 						if (now.after(postTime)){
 							//Gameweek complete but mark for post-update.
-							incomplete.put(leagueID + "," + gw, "post");
+							if(!incomplete.containsKey("post")) {
+								List<String> post = new ArrayList<String>();
+								post.add(leagueID + "," + gw);
+								incomplete.put("post",post);
+							}
+							else {
+								incomplete.get("post").add(leagueID + "," + gw);
+							}
 						}
 
 						preparedStmt.close();
 					}
 					else {
 						//Gameweek Still ongoing, mark for live update
-						incomplete.put(leagueID + "," + gw, "live");
+						if(!incomplete.containsKey("live")) {
+							List<String> live = new ArrayList<String>();
+							live.add(leagueID + "," + gw);
+							incomplete.put("live",live);
+						}
+						else {
+							incomplete.get("live").add(leagueID + "," + gw);
+						}
 					}
 				}
 
@@ -250,7 +282,14 @@ public class MySQLConnection {
 
 							preparedStmt.executeUpdate();
 
-							incomplete.put(leagueID + "," + gw, "post");
+							if(!incomplete.containsKey("post")) {
+								List<String> post = new ArrayList<String>();
+								post.add(leagueID + "," + gw);
+								incomplete.put("post",post);
+							}
+							else {
+								incomplete.get("post").add(leagueID + "," + gw);
+							}
 							preparedStmt.close();
 						}
 						else {
@@ -261,14 +300,28 @@ public class MySQLConnection {
 
 							preparedStmt.executeUpdate();
 
-							incomplete.put(leagueID + "," + gw, "live");
+							if(!incomplete.containsKey("live")) {
+								List<String> live = new ArrayList<String>();
+								live.add(leagueID + "," + gw);
+								incomplete.put("live",live);
+							}
+							else {
+								incomplete.get("live").add(leagueID + "," + gw);
+							}
 							preparedStmt.close();
 						}
 
 					}
 					else {
 						//Gameweek will start soon so wait and check. Call for 2 min wait to check again
-						incomplete.put("Gameweek to go Live", "wait");
+						if(!incomplete.containsKey("wait")) {
+							List<String> wait = new ArrayList<String>();
+							wait.add("Gameweek to go Live");
+							incomplete.put("wait",wait);
+						}
+						else {
+							incomplete.get("wait").add("Gameweek to go Live");
+						}
 
 					}
 				}
@@ -276,13 +329,35 @@ public class MySQLConnection {
 				//Check If Teams have been finalised
 				else if (now.after(startDate)) {
 					//Teams Finalised, get teams
-					incomplete.put(leagueID + "," + gw, "teams");
+					if(!incomplete.containsKey("teams")) {
+						List<String> teams = new ArrayList<String>();
+						teams.add(leagueID + "," + gw);
+						incomplete.put("teams",teams);
+					}
+					else {
+						if(!incomplete.containsKey("post")) {
+							List<String> post = new ArrayList<String>();
+							post.add(leagueID + "," + gw);
+							incomplete.put("post",post);
+						}
+						else {
+							incomplete.get("post").add(leagueID + "," + gw);
+						}
+					}
 				}
 				else {
 					//Check If Gameweek starts today
 					if(startDate.get(Calendar.DAY_OF_MONTH) == now.get(Calendar.DAY_OF_MONTH) && startDate.get(Calendar.MONTH) == now.get(Calendar.MONTH)){
 						//Gameweek does start today
-						incomplete.put("Teams to be finalised","wait");
+						
+						if(!incomplete.containsKey("wait")) {
+							List<String> wait = new ArrayList<String>();
+							wait.add("Teams to be finalised");
+							incomplete.put("wait",wait);
+						}
+						else {
+							incomplete.get("wait").add("Teams to be finalised");
+						}
 					}
 					//Else, still before the start of the next gameweek, nothing to do
 				}
@@ -1087,20 +1162,20 @@ public class MySQLConnection {
 		System.out.println("Done!");
 	}
 
-	public void postUpdate (String gameweek, Leagues leagues) {
+	public void postUpdate (Leagues leagues) {
 		for (ClassicLeague CL: leagues.classicLeague) {
 			CL.loadLeague();
 			CL.loadTeams();
 			storeLeague(CL);
 			preStore(CL);
-			postUpdateStatus(CL.leagueID, gameweek);
+			postUpdateStatus(CL.leagueID, CL.gameweek);
 		}
 		for (H2HLeague H2H: leagues.h2hLeague) {
 			H2H.loadH2HLeague();
 			H2H.loadTeams();
 			storeLeague(H2H);
 			preStore(H2H);
-			postUpdateStatus(H2H.leagueID, gameweek);
+			postUpdateStatus(H2H.leagueID, H2H.gameweek);
 		}
 	}
 

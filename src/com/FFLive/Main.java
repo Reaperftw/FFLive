@@ -16,7 +16,7 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 package com.FFLive;
 
@@ -29,21 +29,22 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.Map.Entry;
+import java.util.List;
+import java.util.Map;
 
 
 public class Main {
 
 
 	public static void main(String[] args) {
-		
+
 		//TODO Via MINS Played, move people off the bench correctly
 		//TODO Clean up error handling
 		//TODO Position
-		
-		
 
-		 
+
+
+
 		//Program Args
 		String ipaddr = "localhost:3306";
 		String username = "";
@@ -147,103 +148,101 @@ public class Main {
 
 		//Open - Connect to and Check DB if data stored, check in current GW and update or end current GW and prep for next GW. Else setup for first run
 		MySQLConnection dbAccess = new MySQLConnection(ipaddr, username, passwd, database);
-		
+
 		//Add Config Passed LeagueIDs to status DB
 		dbAccess.addStatus(leagueIDs);
 		boolean repeat = true;
-		
+
 		Leagues live = new Leagues();
-		//boolean needToPost = false;
+		Leagues post = new Leagues();
+
 		boolean goLive = false;
 		String gameweek = "0";
-
+		boolean wait = true;
 		
-		while(repeat) {
-			repeat = false;
-			boolean wait = false;
-			//Check Status DB for problems and where we are in the gameweek
-			HashMap<String, String> incomplete = dbAccess.statusCheck(); 
+		while(wait) {
+			wait = false;
+
+					while(repeat) {
+						repeat = false;
+						//Check Status DB for problems and where we are in the gameweek
+						Map<String, List<String>> incomplete = dbAccess.statusCheck(); 
 
 
 
-			if(!incomplete.isEmpty()) {
-				for(Entry<String,String> entry : incomplete.entrySet()) {
-					String type = entry.getValue();
-					
-					dbAccess.setWebFront("index", "Checking for Updates");
-					if (type.equals("post")) {
-						
-						String gw = entry.getKey().split(",")[1];
-						String leagueID = entry.getKey().split(",")[0];
-						
-						//Check if next game week has started otherwise post data will be useless...
-						if (dbAccess.nextGWStarted(gw)) {
-							System.out.println("The next gameweek has alraedy started, Post-Gameweek Data will be out of date!");
-							dbAccess.missedUpdateStatus(leagueID, gw);
-						}
-						else {
-							System.out.print("Processing Post GW Updates for " + leagueID + "...  ");
-							Leagues post = new Leagues();
-							post.addLeague(leagueID);
-							dbAccess.postUpdate(gw, post);
-							System.out.println("Done!");
-							
-						}
-						repeat = true;
-					}
-					else if (type.equals("teams")) {
-						
-						String gw = entry.getKey().split(",")[1];
-						String leagueID = entry.getKey().split(",")[0];
-						
-						//Check this team is in the config file, otherwise it could be discarded
-						if (leagueIDs.contains(leagueID)) {
-							System.out.println("Loading Teams for " + leagueID + " for GW:" + gw + "...");
-							Leagues teams = new Leagues();
-							teams.addLeague(leagueID);
-							dbAccess.teamUpdate(gw, teams);
-							repeat = true;
-						}
-						else {
-							System.out.println("Removing " + leagueID + " from the Update List, as it is not in the config...  ");
-							dbAccess.removeLeague(leagueID, gw);
-						}
-					}
-					else if (type.equals("live")) {
-						
-						String gw = entry.getKey().split(",")[1];
-						String leagueID = entry.getKey().split(",")[0];
-						
-						if (leagueIDs.contains(leagueID)) {
-							System.out.println("Adding League " + leagueID + " to Live Update Queue!");
-							live.addLeague(leagueID);
-							goLive = true;
-							gameweek = gw;
-						}
-						else {
-							System.out.println("Removing " + leagueID + " from the Update List, as it is not in the config...  ");
-							dbAccess.removeLeague(leagueID, gw);
+						if(!incomplete.isEmpty()) {
+							dbAccess.setWebFront("index", "Checking for Updates");
+
+							if (incomplete.containsKey("post")) {
+
+								for (String temp :incomplete.get("post")) {
+									String gw = temp.split(",")[1];
+									String leagueID = temp.split(",")[0];
+									if (dbAccess.nextGWStarted(gw)) {
+										System.out.println("The next gameweek has alraedy started, Post-Gameweek Data will be out of date!");
+										dbAccess.missedUpdateStatus(leagueID, gw);
+									}
+									else {
+										System.out.print("Processing Post GW Updates for " + leagueID + "...  ");
+										post.addLeague(leagueID);	
+									}						
+								}
+								dbAccess.postUpdate(post);
+								System.out.println("Done!");
+								repeat = true;
+
+							}
+							if (incomplete.containsKey("teams")) {
+								for (String temp: incomplete.get("teams")) {
+									String gw = temp.split(",")[1];
+									String leagueID = temp.split(",")[0];
+
+									if (leagueIDs.contains(leagueID)) {
+										System.out.println("Loading Teams for " + leagueID + " for GW:" + gw + "...");
+										Leagues teams = new Leagues();
+										teams.addLeague(leagueID);
+										dbAccess.teamUpdate(gw, teams);
+									}
+									else {
+										System.out.println("Removing " + leagueID + " from the Update List, as it is not in the config...  ");
+										dbAccess.removeLeague(leagueID, gw);
+									}
+
+								}
+								repeat = true;
+
+							}
+							if (incomplete.containsKey("live")) {
+								for (String temp: incomplete.get("teams")) {
+									String gw = temp.split(",")[1];
+									String leagueID = temp.split(",")[0];
+
+									if (leagueIDs.contains(leagueID)) {
+										System.out.println("Adding League " + leagueID + " to Live Update Queue!");
+										live.addLeague(leagueID);
+										goLive = true;
+										gameweek = gw;
+									}
+									else {
+										System.out.println("Removing " + leagueID + " from the Update List, as it is not in the config...  ");
+										dbAccess.removeLeague(leagueID, gw);
+									}
+								}
+							}
+							if (incomplete.containsKey("wait")) {
+								for (String temp: incomplete.get("teams")) {
+									System.out.print("Will wait for " + temp + ", End program by creating stop.txt in this directory...  ");
+									repeat = true;
+									wait = true;
+								}
+							}
 						}
 
-
 					}
-					else if (type.equals("wait")) {
-						System.out.print("Will wait for " + entry.getKey() + ", End program by creating stop.txt in this directory...  ");
-						repeat = true;
-						wait = true;
-					}
-					else {						
-						String leagueID = entry.getKey().split(",")[0];
-						
-						System.err.println("Something has gone wrong processing League ID " + leagueID + ", skipping...   ");
-					}
-				}
-			}
-			
 			if (wait) {
 				try {
 
-					dbAccess.setWebFront("index", "Waiting for Day to Start");
+					dbAccess.setWebFront("index", "Waiting for data to become available");
 					Thread.sleep(120000);
 				} catch (InterruptedException e) {
 					System.err.println(e);
@@ -254,8 +253,17 @@ public class Main {
 					break;
 				}
 			}
+
 		}
-	
+
+
+
+
+
+
+
+
+
 		if (goLive) {
 			Calendar endOfDay = Calendar.getInstance();
 			Calendar early = Calendar.getInstance();
@@ -264,7 +272,7 @@ public class Main {
 			endOfDay.set(Calendar.MINUTE, 0);
 			early.set(Calendar.HOUR_OF_DAY, 8);
 			early.set(Calendar.MINUTE, 0);
-			
+
 			if (new File("stop.txt").exists()) {
 				//System.out.print("Trigger File found, exiting...  ");
 			}
@@ -275,11 +283,11 @@ public class Main {
 				//It is sometime between midnight and morning, again no point running.
 			}
 			else {
-				
-				
+
+
 				dbAccess.setWebFront("index", "Live Updating");
 				System.out.print("Starting Live Update for all Selected Leagues...  ");
-				
+
 				System.out.println("Live Running Until " + endOfDay.getTime() + ", or End program by creating stop.txt in this directory... ");
 				while (Calendar.getInstance().before(endOfDay)) {
 					dbAccess.generatePlayerList(gameweek);
@@ -302,7 +310,7 @@ public class Main {
 		else {
 			System.out.println("All Updates Complete and currently not time to go live!");
 		}
-		
+
 
 		//H2HLeague test = new H2HLeague(28716);
 		//test.loadH2HLeague();
@@ -312,28 +320,28 @@ public class Main {
 		//dbAccess.generatePlayerList("1");
 		//dbAccess.updatePlayers("1");
 		//dbAccess.updateScores("1");
-		
+
 		/*
 		ClassicLeague league = new ClassicLeague(27611);
 		league.loadLeague();
 		league.loadTeams();
 		dbAccess.storeLeague(league);
 		dbAccess.storeLeagueData(league);
-		
+
 		H2HLeague league2 = new H2HLeague(28716);
 		league2.loadH2HLeague();
 		league2.loadTeams();
 		dbAccess.storeLeague(league2);
 		dbAccess.storeLeagueData(league2);
-		
+
 		dbAccess.generatePlayerList("1");
 		dbAccess.updatePlayers("1");
 		dbAccess.updateScores("1");
-		
-		
+
+
 		String gameweek = "1";
 		boolean goLive = true;
-		*/
+		 */
 		/*
 		ClassicLeague league = new ClassicLeague(27611);
 		league.loadLeague();
@@ -383,12 +391,12 @@ public class Main {
 		dbAccess.generatePlayerList("1");
 		//dbAccess.updatePlayers("1");
 		//dbAccess.updateScores("1");
-		*/
-		
+		 */
+
 		dbAccess.setWebFront("index", "Up To Date");
 		dbAccess.closeConnections();
 		System.out.println("Finished running Live Leagues!");
-		
+
 	}
 }
 
