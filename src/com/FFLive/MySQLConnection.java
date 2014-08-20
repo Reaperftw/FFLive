@@ -178,12 +178,14 @@ public class MySQLConnection {
 				Calendar startDate = (new DateParser(status.getString("starts"))).convertDate();
 				Calendar kickOff = (new DateParser(status.getString("kickOff"))).convertDate();
 				Calendar endDate = (new DateParser(status.getString("ends"))).convertDate();
+				Calendar postTime = (new DateParser(status.getString("ends"))).convertDate();
 				//Add 2 Hours on to make sure match has finished
 				endDate.add(Calendar.HOUR_OF_DAY, 2);
 				startDate.add(Calendar.MINUTE, 30);
+				postTime.add(Calendar.DAY_OF_MONTH, 1);
 
 				if (status.getString("started").equals("Y")) {
-					
+
 					if(status.getString("teamsStored").equals("N")) {
 						incomplete.put(leagueID + "," + gw, "teams");
 					}
@@ -194,14 +196,22 @@ public class MySQLConnection {
 						if(status.getString("postGwUpdate").equals("Y")) {
 							//GW Complete, Move onto next line
 						}
+						else if (status.getString("postGwUpdate").equals("N")) {
+
+							if (now.after(postTime)){
+								//Gameweek complete but mark for post-update.
+								incomplete.put(leagueID + "," + gw, "post");
+							}
+							else {
+								//Gameweek Finished but too soon after last game
+							}
+						}
 						else if(status.getString("postGwUpdate").equals("F")) {
 
 							//System.out.println("Post Gameweek Update Missed");
 						}
-						else {
-							//Gameweek complete but mark for post-update.
-							incomplete.put(leagueID + "," + gw, "post");
-						}
+
+
 					}
 					//Check Time to see if Gameweek has now ended.
 					else if(now.after(endDate)) {
@@ -212,7 +222,11 @@ public class MySQLConnection {
 
 						preparedStmt.executeUpdate();
 
-						incomplete.put(leagueID + "," + gw, "post");
+						if (now.after(postTime)){
+							//Gameweek complete but mark for post-update.
+							incomplete.put(leagueID + "," + gw, "post");
+						}
+
 						preparedStmt.close();
 					}
 					else {
@@ -363,8 +377,154 @@ public class MySQLConnection {
 	public void storeLeague(ClassicLeague league) {
 		try {
 			System.out.print("Storing League '" + league.leagueName + "' to DB...  ");
-			int gw = Integer.parseInt(league.gameWeek);
+			int gw = Integer.parseInt(league.gameweek);
 
+			PreparedStatement leaguesInsert = conn.prepareStatement("INSERT INTO leagues values (?, ?, 'Classic') ON DUPLICATE KEY UPDATE name = ?, type = 'Classic'");
+			leaguesInsert.setInt(1, league.leagueID);
+			leaguesInsert.setString(2, league.leagueName);
+			leaguesInsert.setString(3, league.leagueName);
+			leaguesInsert.executeUpdate();
+
+
+			for (Entry<String,Team> entry: league.managerMap.entrySet()) {
+				PreparedStatement ILeaguesTeamsGW = conn.prepareStatement("INSERT INTO leagues_teamsGW? (leagueID, managerID, liveLp, livePosition)  values (?, ?, ?, ?) ON DUPLICATE KEY UPDATE liveLp = ?, livePosition = ?");
+				ILeaguesTeamsGW.setInt(1, gw);
+				ILeaguesTeamsGW.setInt(2, league.leagueID);
+				ILeaguesTeamsGW.setInt(3, Integer.parseInt(entry.getKey()));
+				ILeaguesTeamsGW.setInt(4, entry.getValue().lpScore);
+				ILeaguesTeamsGW.setInt(5, entry.getValue().position);
+				ILeaguesTeamsGW.setInt(6, entry.getValue().lpScore);
+				ILeaguesTeamsGW.setInt(7, entry.getValue().position);
+				ILeaguesTeamsGW.executeUpdate();
+
+				//statement.executeUpdate("INSERT INTO " + teamsGW + " (managerID, teamName, managerName) values (" + entry.getValue().managerID + ", '" + entry.getValue().teamName + "' ,'" + entry.getValue().managerName + "') ON DUPLICATE KEY UPDATE teamName = '" + entry.getValue().teamName + "', managerName = '" + entry.getValue().managerName + "'");
+				PreparedStatement IteamsGW = conn.prepareStatement("INSERT INTO teamsGW? (managerID, teamName, managerName, liveOp, gw) values (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE teamName = ?, managerName = ?, liveOp = ?, gw = ?");
+				IteamsGW.setInt(1, gw);
+				IteamsGW.setString(2, entry.getValue().managerID);
+				IteamsGW.setString(3, entry.getValue().teamName);
+				IteamsGW.setString(4, entry.getValue().managerName);
+				IteamsGW.setInt(5, entry.getValue().opScore);
+				IteamsGW.setInt(6, entry.getValue().gameWeekScore);
+				IteamsGW.setString(7, entry.getValue().teamName);
+				IteamsGW.setString(8, entry.getValue().managerName);
+				IteamsGW.setInt(9, entry.getValue().opScore);
+				IteamsGW.setInt(10, entry.getValue().gameWeekScore);
+
+				IteamsGW.executeUpdate();
+
+				ILeaguesTeamsGW.close();
+				IteamsGW.close();
+			}
+			leaguesInsert.close();
+			System.out.println("Done!");
+
+		}
+		catch (Exception e) {
+			//TODO Error Handle
+			e.printStackTrace();
+			System.exit(1000);
+		}
+	}
+	
+	public void storeLeague(H2HLeague league) {
+		try {
+			System.out.print("Storing League '" + league.leagueName + "' to DB...  ");
+			int gw = Integer.parseInt(league.gameweek);
+
+			PreparedStatement leaguesInsertH2H = conn.prepareStatement("INSERT INTO leagues values (?, ?, 'H2H') ON DUPLICATE KEY UPDATE name = ?, type = 'H2H'");
+			leaguesInsertH2H.setInt(1, league.leagueID);
+			leaguesInsertH2H.setString(2, league.leagueName);
+			leaguesInsertH2H.setString(3, league.leagueName);
+			leaguesInsertH2H.executeUpdate();
+
+			//Insert Fixtures
+			int id = 1;
+			for (Entry<String, String> entry : league.fixtureMap.entrySet()) {
+				PreparedStatement ITH2HFixtures = conn.prepareStatement("INSERT INTO H2HGW? (leagueID, home, away, fixtureNo) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE fixtureNo = ?");
+				ITH2HFixtures.setInt(1, gw);
+				ITH2HFixtures.setInt(2, league.leagueID);
+				ITH2HFixtures.setInt(3, Integer.parseInt(entry.getKey()));
+				ITH2HFixtures.setInt(4, Integer.parseInt(entry.getValue()));
+				ITH2HFixtures.setInt(5, id);
+				ITH2HFixtures.setInt(6, id);
+				ITH2HFixtures.executeUpdate();
+				id++;
+				ITH2HFixtures.close();
+
+			}
+
+			for (Entry<String,Team> entry: league.managerMap.entrySet()) {
+
+				PreparedStatement ILeaguesTeamsGW = conn.prepareStatement("INSERT INTO leagues_teamsGW? (leagueID, managerID, liveLp, livePosition, liveWins, liveLoss, liveDraw, livePoints)  values (?, ?, ?, ?, ? ,? ,? ,?) ON DUPLICATE KEY UPDATE liveLp = ?, livePosition = ?, liveWins = ?, liveLoss = ?, liveDraw = ?, livePoints = ?");
+				ILeaguesTeamsGW.setInt(1, gw);
+				ILeaguesTeamsGW.setInt(2, league.leagueID);
+				ILeaguesTeamsGW.setInt(3, Integer.parseInt(entry.getKey()));
+				ILeaguesTeamsGW.setInt(4, entry.getValue().lpScore);
+				ILeaguesTeamsGW.setInt(5, entry.getValue().position);
+				ILeaguesTeamsGW.setInt(6, entry.getValue().win);
+				ILeaguesTeamsGW.setInt(7, entry.getValue().loss);
+				ILeaguesTeamsGW.setInt(8, entry.getValue().draw);
+				ILeaguesTeamsGW.setInt(9, entry.getValue().h2hScore);
+				ILeaguesTeamsGW.setInt(10, entry.getValue().lpScore);
+				ILeaguesTeamsGW.setInt(11, entry.getValue().position);
+				ILeaguesTeamsGW.setInt(12, entry.getValue().win);
+				ILeaguesTeamsGW.setInt(13, entry.getValue().loss);
+				ILeaguesTeamsGW.setInt(14, entry.getValue().draw);
+				ILeaguesTeamsGW.setInt(15, entry.getValue().h2hScore);
+				ILeaguesTeamsGW.executeUpdate();
+
+				PreparedStatement IteamsGW = conn.prepareStatement("INSERT INTO teamsGW? (managerID, teamName, managerName, liveOp, gw) values (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE teamName = ?, managerName = ?, liveOp = ?, gw = ?");
+				IteamsGW.setInt(1, gw);
+				IteamsGW.setString(2, entry.getValue().managerID);
+				IteamsGW.setString(3, entry.getValue().teamName);
+				IteamsGW.setString(4, entry.getValue().managerName);
+				IteamsGW.setInt(5, entry.getValue().opScore);
+				IteamsGW.setInt(6, entry.getValue().gameWeekScore);
+				IteamsGW.setString(7, entry.getValue().teamName);
+				IteamsGW.setString(8, entry.getValue().managerName);
+				IteamsGW.setInt(9, entry.getValue().opScore);
+				IteamsGW.setInt(10, entry.getValue().gameWeekScore);
+
+				IteamsGW.executeUpdate();
+
+				ILeaguesTeamsGW.close();
+				IteamsGW.close();
+			}
+			leaguesInsertH2H.close();
+			System.out.println("Done!");
+
+		}
+		catch (SQLException sql) {
+			sql.printStackTrace();
+		}
+		catch (Exception e) {
+			//TODO Error Handle
+			e.printStackTrace();
+			System.exit(1010);
+		}
+	}
+	
+	public void preStore (ClassicLeague league) {
+		try {
+			System.out.print("Storing Pre-Gameweek Data for League '" + league.leagueName + "' to DB...  ");
+			int gw = Integer.parseInt(league.gameweek) + 1;
+
+			PreparedStatement CTleagueTeamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS leagues_teamsGW? (leagueID INT NOT NULL, managerID INT NOT NULL, lp INT DEFAULT 0, position INT, wins INT DEFAULT 0, loss INT DEFAULT 0, draw INT DEFAULT 0, points INT DEFAULT 0, fixture VARCHAR(2), livePoints INT, liveLP INT DEFAULT 0, liveWin INT DEFAULT 0, liveLoss INT DEFAULT 0, liveDraw INT DEFAULT 0, livePosition INT, posDifferential VARCHAR(10) DEFAULT '-', UNIQUE (leagueID, managerID))");
+			CTleagueTeamsGW.setInt(1, gw);
+			CTleagueTeamsGW.executeUpdate();
+
+			PreparedStatement CTteamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS teamsGW? (managerID INT NOT NULL UNIQUE, teamName VARCHAR(25), managerName VARCHAR(120), op INT DEFAULT 0, gw INT DEFAULT 0, liveOP INT DEFAULT 0, GkID INT DEFAULT 0, DefID1 INT DEFAULT 0, DefID2 INT DEFAULT 0, DefID3 INT DEFAULT 0, DefID4 INT DEFAULT 0, DefID5 INT DEFAULT 0, MidID1 INT DEFAULT 0, MidID2 INT DEFAULT 0, MidID3 INT DEFAULT 0, MidID4 INT DEFAULT 0, MidID5 INT DEFAULT 0, ForID1 INT DEFAULT 0, ForID2 INT DEFAULT 0, ForID3 INT DEFAULT 0, BenchID1 INT DEFAULT 0, BenchID2 INT DEFAULT 0, BenchID3 INT DEFAULT 0, BenchID4 INT DEFAULT 0, captainID INT DEFAULT 0, viceCaptainID INT DEFAULT 0)");
+			CTteamsGW.setInt(1, gw);
+			CTteamsGW.executeUpdate();
+
+			PreparedStatement CTPlayersGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS playersGW? (playerID INT NOT NULL UNIQUE, playerCount INT DEFAULT 1 NOT NULL, firstName VARCHAR(30), lastName VARCHAR(30), webName VARCHAR(40), score INT, gameweekBreakdown VARCHAR(150), breakdown VARCHAR(250), teamName VARCHAR(30), currentFixture VARCHAR(30), nextFixture VARCHAR(30), status VARCHAR(10), news VARCHAR(100), photo VARCHAR(30))");
+			CTPlayersGW.setInt(1,gw);
+			CTPlayersGW.executeUpdate();
+
+			PreparedStatement CTH2HFixture = conn.prepareStatement("CREATE TABLE IF NOT EXISTS H2HGW? (leagueID INT NOT NULL, home VARCHAR(30), away VARCHAR(30), fixtureNo INT, UNIQUE(leagueID, home, away))");
+			CTH2HFixture.setInt(1,gw);
+			CTH2HFixture.executeUpdate();
+			
 			PreparedStatement leaguesInsert = conn.prepareStatement("INSERT INTO leagues values (?, ?, 'Classic') ON DUPLICATE KEY UPDATE name = ?, type = 'Classic'");
 			leaguesInsert.setInt(1, league.leagueID);
 			leaguesInsert.setString(2, league.leagueName);
@@ -408,36 +568,38 @@ public class MySQLConnection {
 		catch (Exception e) {
 			//TODO Error Handle
 			e.printStackTrace();
-			System.exit(1000);
+			System.exit(1030);
 		}
 	}
-
-	public void storeLeague(H2HLeague league) {
+	
+	public void preStore(H2HLeague league) {
 		try {
-			System.out.print("Storing League '" + league.leagueName + "' to DB...  ");
-			int gw = Integer.parseInt(league.gameweek);
+			System.out.print("Storing Pre-Gameweek Data for League '" + league.leagueName + "' to DB...  ");
+			int gw = Integer.parseInt(league.gameweek) + 1;
 
+			PreparedStatement CTleagueTeamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS leagues_teamsGW? (leagueID INT NOT NULL, managerID INT NOT NULL, lp INT DEFAULT 0, position INT, wins INT DEFAULT 0, loss INT DEFAULT 0, draw INT DEFAULT 0, points INT DEFAULT 0, fixture VARCHAR(2), livePoints INT, liveLP INT DEFAULT 0, liveWin INT DEFAULT 0, liveLoss INT DEFAULT 0, liveDraw INT DEFAULT 0, livePosition INT, posDifferential VARCHAR(10) DEFAULT '-', UNIQUE (leagueID, managerID))");
+			CTleagueTeamsGW.setInt(1, gw);
+			CTleagueTeamsGW.executeUpdate();
+
+			PreparedStatement CTteamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS teamsGW? (managerID INT NOT NULL UNIQUE, teamName VARCHAR(25), managerName VARCHAR(120), op INT DEFAULT 0, gw INT DEFAULT 0, liveOP INT DEFAULT 0, GkID INT DEFAULT 0, DefID1 INT DEFAULT 0, DefID2 INT DEFAULT 0, DefID3 INT DEFAULT 0, DefID4 INT DEFAULT 0, DefID5 INT DEFAULT 0, MidID1 INT DEFAULT 0, MidID2 INT DEFAULT 0, MidID3 INT DEFAULT 0, MidID4 INT DEFAULT 0, MidID5 INT DEFAULT 0, ForID1 INT DEFAULT 0, ForID2 INT DEFAULT 0, ForID3 INT DEFAULT 0, BenchID1 INT DEFAULT 0, BenchID2 INT DEFAULT 0, BenchID3 INT DEFAULT 0, BenchID4 INT DEFAULT 0, captainID INT DEFAULT 0, viceCaptainID INT DEFAULT 0)");
+			CTteamsGW.setInt(1, gw);
+			CTteamsGW.executeUpdate();
+
+			PreparedStatement CTPlayersGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS playersGW? (playerID INT NOT NULL UNIQUE, playerCount INT DEFAULT 1 NOT NULL, firstName VARCHAR(30), lastName VARCHAR(30), webName VARCHAR(40), score INT, gameweekBreakdown VARCHAR(150), breakdown VARCHAR(250), teamName VARCHAR(30), currentFixture VARCHAR(30), nextFixture VARCHAR(30), status VARCHAR(10), news VARCHAR(100), photo VARCHAR(30))");
+			CTPlayersGW.setInt(1,gw);
+			CTPlayersGW.executeUpdate();
+
+			PreparedStatement CTH2HFixture = conn.prepareStatement("CREATE TABLE IF NOT EXISTS H2HGW? (leagueID INT NOT NULL, home VARCHAR(30), away VARCHAR(30), fixtureNo INT, UNIQUE(leagueID, home, away))");
+			CTH2HFixture.setInt(1,gw);
+			CTH2HFixture.executeUpdate();
+			
+			
 			PreparedStatement leaguesInsertH2H = conn.prepareStatement("INSERT INTO leagues values (?, ?, 'H2H') ON DUPLICATE KEY UPDATE name = ?, type = 'H2H'");
 			leaguesInsertH2H.setInt(1, league.leagueID);
 			leaguesInsertH2H.setString(2, league.leagueName);
 			leaguesInsertH2H.setString(3, league.leagueName);
 			leaguesInsertH2H.executeUpdate();
 
-			//Insert Fixtures
-			int id = 1;
-			for (Entry<String, String> entry : league.fixtureMap.entrySet()) {
-				PreparedStatement ITH2HFixtures = conn.prepareStatement("INSERT INTO H2HGW? (leagueID, home, away, fixtureNo) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE fixtureNo = ?");
-				ITH2HFixtures.setInt(1, gw);
-				ITH2HFixtures.setInt(2, league.leagueID);
-				ITH2HFixtures.setInt(3, Integer.parseInt(entry.getKey()));
-				ITH2HFixtures.setInt(4, Integer.parseInt(entry.getValue()));
-				ITH2HFixtures.setInt(5, id);
-				ITH2HFixtures.setInt(6, id);
-				ITH2HFixtures.executeUpdate();
-				id++;
-				ITH2HFixtures.close();
-
-			}
 
 			for (Entry<String,Team> entry: league.managerMap.entrySet()) {
 
@@ -459,7 +621,7 @@ public class MySQLConnection {
 				ILeaguesTeamsGW.setInt(15, entry.getValue().h2hScore);
 				ILeaguesTeamsGW.executeUpdate();
 
-				PreparedStatement IteamsGW = conn.prepareStatement("INSERT INTO teamsGW? (managerID, teamName, managerName, op, gw) values (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE teamName = ?, managerName = ?, op = ?, gw = ?");
+				PreparedStatement IteamsGW = conn.prepareStatement("INSERT INTO teamsGW? (managerID, teamName, managerName,op, gw) values (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE teamName = ?, managerName = ?, op = ?, gw = ?");
 				IteamsGW.setInt(1, gw);
 				IteamsGW.setString(2, entry.getValue().managerID);
 				IteamsGW.setString(3, entry.getValue().teamName);
@@ -486,7 +648,7 @@ public class MySQLConnection {
 		catch (Exception e) {
 			//TODO Error Handle
 			e.printStackTrace();
-			System.exit(1010);
+			System.exit(1040);
 		}
 	}
 
@@ -619,7 +781,7 @@ public class MySQLConnection {
 						+ "where playerID = " + player.playerID);*/
 				UpPGw.close();
 			}
-			
+
 		}
 
 		catch (Exception e) {
@@ -848,7 +1010,7 @@ public class MySQLConnection {
 					int prevLP = -1;
 					int skip = 1;
 					while(allTeams.next()) {
-						
+
 						if(prevLP == allTeams.getInt("liveLP")) {
 							skip ++;
 						}
@@ -924,22 +1086,24 @@ public class MySQLConnection {
 
 		System.out.println("Done!");
 	}
-	
+
 	public void postUpdate (String gameweek, Leagues leagues) {
 		for (ClassicLeague CL: leagues.classicLeague) {
 			CL.loadLeague();
 			CL.loadTeams();
 			storeLeague(CL);
+			preStore(CL);
 			postUpdateStatus(CL.leagueID, gameweek);
 		}
 		for (H2HLeague H2H: leagues.h2hLeague) {
 			H2H.loadH2HLeague();
 			H2H.loadTeams();
 			storeLeague(H2H);
+			preStore(H2H);
 			postUpdateStatus(H2H.leagueID, gameweek);
 		}
 	}
-	
+
 
 	public void teamUpdate (String Gameweek, Leagues leagues) {
 		for (ClassicLeague CL: leagues.classicLeague) {

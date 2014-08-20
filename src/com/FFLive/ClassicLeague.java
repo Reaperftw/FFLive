@@ -40,7 +40,7 @@ public class ClassicLeague {
 	private int timeout = 0;
 	public int leagueID;
 	public String leagueName = null;
-	public String gameWeek = null;
+	public String gameweek = null;
 
 	public ClassicLeague(int league) {
 		leagueID = league;
@@ -67,9 +67,9 @@ public class ClassicLeague {
 				System.out.println("Loaded League: " + leagueName);
 
 				//Works Out Gameweek
-				gameWeek = leagueTable.select("a[href]").first().attr("href").split("/")[4];
+				gameweek = leagueTable.select("a[href]").first().attr("href").split("/")[4];
 
-				System.out.println("The Current Gameweek is " + gameWeek);
+				System.out.println("The Current Gameweek is " + gameweek);
 				System.out.print("Loading Managers...  ");
 
 				int counter = 0;
@@ -95,7 +95,7 @@ public class ClassicLeague {
 							//League Score in the 6th Column
 							mapString[1] = el.text().replaceAll("\\D+","");
 							//Adds the manager using addManager Method
-							addManager(managerIDTemp, gameWeek, mapString[1], mapString[0]);
+							addManager(managerIDTemp, gameweek, mapString[1], mapString[0]);
 							counter = 0;
 							break;
 						}
