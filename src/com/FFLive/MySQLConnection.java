@@ -84,6 +84,20 @@ public class MySQLConnection {
 		}
 	}
 
+	public void setWebFrontGW(String page, int gw) {
+		try {
+			PreparedStatement web = conn.prepareStatement("UPDATE webFront set currGameweek = ? where page = ?");	
+			web.setInt(1, gw);
+			web.setString(2, page);
+			web.executeUpdate();
+			web.close();
+		}
+		catch (SQLException sql){
+			System.err.println("");
+			System.err.println("Error setting Web Front Gameweek -- " + sql);
+		}
+	}
+
 	public void addStatus(ArrayList<String> leagueIDs) {
 
 		System.out.print("Adding/Updating leagues...  ");
@@ -92,14 +106,19 @@ public class MySQLConnection {
 			Fixtures fixture = new Fixtures();
 			fixture.loadFixtures();
 			int gw = Integer.parseInt(fixture.gameweek);
+			
+			//Set the correct gameweek on the front of the webpage
+			Calendar now = Calendar.getInstance();
+			if(now.before(new DateParser(fixture.kickOff).convertDate())) {
+				setWebFrontGW("index",gw-1);
+			}
+			else {
+				setWebFrontGW("index",gw);
+			}
+				
 
 
 			//CREATE all the required Gameweek Leagues...
-
-
-			PreparedStatement web = conn.prepareStatement("UPDATE webFront set currGameweek = ? where page = 'index'");
-			web.setInt(1, gw);
-			web.executeUpdate();
 
 			PreparedStatement CTleagueTeamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS leagues_teamsGW? (leagueID INT NOT NULL, managerID INT NOT NULL, lp INT DEFAULT 0, position INT, wins INT DEFAULT 0, loss INT DEFAULT 0, draw INT DEFAULT 0, points INT DEFAULT 0, fixture VARCHAR(2), livePoints INT, liveLP INT DEFAULT 0, liveWin INT DEFAULT 0, liveLoss INT DEFAULT 0, liveDraw INT DEFAULT 0, livePosition INT, posDifferential VARCHAR(10) DEFAULT '-', UNIQUE (leagueID, managerID))");
 			CTleagueTeamsGW.setInt(1, gw);
@@ -131,7 +150,7 @@ public class MySQLConnection {
 				preparedStmt.executeUpdate();
 				preparedStmt.close();
 			}
-			
+
 
 			if (gw != 1) {
 				int prevGW = gw -1;
@@ -167,15 +186,13 @@ public class MySQLConnection {
 					preparedStmt.executeUpdate();
 					preparedStmt.close();
 				}
-				
+
 
 			}
 			CTleagueTeamsGW.close();
 			CTteamsGW.close();
 			CTPlayersGW.close();
 			CTH2HFixture.close();
-
-			web.close();
 
 			System.out.println("Ready!");
 
@@ -230,8 +247,8 @@ public class MySQLConnection {
 				postDate.add(Calendar.DAY_OF_MONTH, 1);
 
 				//Check the Times and update the status table
-				
-				
+
+
 				if(status.getString("started").equals("Y")) {
 					//GW Has Started, are teams store
 					if(status.getString("teamsStored").equals("Y")) {
@@ -262,7 +279,7 @@ public class MySQLConnection {
 							//Gameweek has now ended, check if after post date
 							if(now.after(postDate)) {
 								//Now is after post date, update status table and queue for post update
-								
+
 								generalStatusUpdate(leagueID,gw,"Y", "Y");
 								if(!incomplete.containsKey("post")) {
 									List<String> post = new ArrayList<String>();
@@ -276,12 +293,12 @@ public class MySQLConnection {
 							else {
 								//Not after post date, update status table and mark to do nothing
 								generalStatusUpdate(leagueID,gw,"Y", "Y");
-								
+
 							}
 						}
 						else {
 							//Gameweek has stated but not ended, queue to go live
-							
+
 							if(!incomplete.containsKey("live")) {
 								List<String> live = new ArrayList<String>();
 								live.add(leagueID + "," + gw);
@@ -300,7 +317,7 @@ public class MySQLConnection {
 							if (now.after(postDate)) {
 								//After Post, Queue for Post and Update status table
 								generalStatusUpdate(leagueID,gw,"Y", "Y");
-								
+
 								if(!incomplete.containsKey("post")) {
 									List<String> post = new ArrayList<String>();
 									post.add(leagueID + "," + gw);
@@ -313,7 +330,7 @@ public class MySQLConnection {
 							else {
 								//Ended but not after post, queue for teams and update status
 								generalStatusUpdate(leagueID,gw,"Y", "Y");
-								
+
 								if(!incomplete.containsKey("teams")) {
 									List<String> teams = new ArrayList<String>();
 									teams.add(leagueID + "," + gw);
@@ -336,7 +353,7 @@ public class MySQLConnection {
 							else {
 								incomplete.get("teams").add(leagueID + "," + gw);
 							}
-							
+
 							if(!incomplete.containsKey("live")) {
 								List<String> live = new ArrayList<String>();
 								live.add(leagueID + "," + gw);
@@ -358,7 +375,7 @@ public class MySQLConnection {
 							if(now.after(postDate)) {
 								//Now After Post Date, Queue for Post and Update Status Table
 								generalStatusUpdate(leagueID,gw,"Y", "Y");
-								
+
 								if(!incomplete.containsKey("post")) {
 									List<String> post = new ArrayList<String>();
 									post.add(leagueID + "," + gw);
@@ -376,10 +393,10 @@ public class MySQLConnection {
 						}
 						else {
 							//Not After End Date, Update Status Table to Started and Queue for Live
-							
+
 
 							generalStatusUpdate(leagueID,gw,"Y", "N");
-							
+
 							if(!incomplete.containsKey("live")) {
 								List<String> live = new ArrayList<String>();
 								live.add(leagueID + "," + gw);
@@ -393,7 +410,7 @@ public class MySQLConnection {
 					//Gameweek Not Started, but teams stored, does gameweek start today?
 					else if (startDate.get(Calendar.DAY_OF_MONTH) == now.get(Calendar.DAY_OF_MONTH) && startDate.get(Calendar.MONTH) == now.get(Calendar.MONTH)) {
 						//Gameweek does start today, queue for wait, nothing to update the status with
-						
+
 						if(!incomplete.containsKey("wait")) {
 							List<String> wait = new ArrayList<String>();
 							wait.add("Teams to be finalised");
@@ -418,7 +435,7 @@ public class MySQLConnection {
 							//After End date, is after postUpdate?
 							if(now.after(postDate)) {
 								//After Post Date, Update Status table and queue for post
-								
+
 								generalStatusUpdate(leagueID,gw,"Y", "Y");
 								if(!incomplete.containsKey("post")) {
 									List<String> post = new ArrayList<String>();
@@ -445,7 +462,7 @@ public class MySQLConnection {
 							else {
 								incomplete.get("teams").add(leagueID + "," + gw);
 							}
-							
+
 							if(!incomplete.containsKey("live")) {
 								List<String> live = new ArrayList<String>();
 								live.add(leagueID + "," + gw);
@@ -458,7 +475,7 @@ public class MySQLConnection {
 					}
 					else {
 						//Not after kick off but after started, queue for teams and wait
-						
+
 						if(!incomplete.containsKey("teams")) {
 							List<String> teams = new ArrayList<String>();
 							teams.add(leagueID + "," + gw);
@@ -480,7 +497,7 @@ public class MySQLConnection {
 				else {
 					//Pre Gameweek and nothing to do.
 				}
-				
+
 			}
 			statement.close();
 
@@ -498,7 +515,7 @@ public class MySQLConnection {
 		System.out.println("Done!");
 		return incomplete;
 	}
-	
+
 	public void generalStatusUpdate (int leagueID, int gw, String started, String ended) {
 		try {
 			PreparedStatement preparedStmt = conn.prepareStatement("UPDATE status set started=?, ended=? where LeagueID = ? AND Gameweek = ?");
@@ -564,7 +581,7 @@ public class MySQLConnection {
 			int GW = Integer.parseInt(gw.trim()) + 1;
 			Statement statement = conn.createStatement();
 			ResultSet rs = statement.executeQuery("SELECT starts FROM status WHERE Gameweek=" + GW);
-			
+
 			Calendar now = Calendar.getInstance();
 			while (rs.next()) {
 				Calendar yes = (new DateParser (rs.getString("starts"))).convertDate();
@@ -1310,7 +1327,7 @@ public class MySQLConnection {
 			teamsUpdateStatus(CL.leagueID, CL.gameweek);
 			postUpdateStatus(CL.leagueID, CL.gameweek);
 			gameweeks.add(CL.gameweek);
-			
+
 		}
 		for (H2HLeague H2H: leagues.h2hLeague) {
 			H2H.loadH2HLeague();

@@ -53,7 +53,7 @@ public class Main {
 		//Initial open
 		Calendar currentDate = Calendar.getInstance();
 		System.out.println("");
-		System.out.println("FFLive v3.0.5 - Started " + currentDate.getTime());
+		System.out.println("FFLive v3.0.6 - Started " + currentDate.getTime());
 		System.out.print("Loading Config...  ");
 
 		//Load Config File
@@ -258,6 +258,8 @@ public class Main {
 			early.set(Calendar.HOUR_OF_DAY, 8);
 			early.set(Calendar.MINUTE, 0);
 
+			dbAccess.setWebFrontGW("index", Integer.parseInt(gameweek));
+			
 			if (new File("stop.txt").exists()) {
 				//System.out.print("Trigger File found, exiting...  ");
 			}
