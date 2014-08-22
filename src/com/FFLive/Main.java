@@ -41,9 +41,6 @@ public class Main {
 		//TODO Via MINS Played, move people off the bench correctly
 		//TODO Clean up error handling
 
-
-
-
 		//Program Args
 		String ipaddr = "localhost:3306";
 		String username = "";
@@ -143,8 +140,6 @@ public class Main {
 			System.exit(3);
 		}
 
-
-
 		//Open - Connect to and Check DB if data stored, check in current GW and update or end current GW and prep for next GW. Else setup for first run
 		MySQLConnection dbAccess = new MySQLConnection(ipaddr, username, passwd, database);
 
@@ -166,8 +161,6 @@ public class Main {
 						repeat = false;
 						//Check Status DB for problems and where we are in the gameweek
 						Map<String, List<String>> incomplete = dbAccess.statusCheck(); 
-
-
 
 						if(!incomplete.isEmpty()) {
 							dbAccess.setWebFront("index", "Checking for Updates");
@@ -256,13 +249,6 @@ public class Main {
 		}
 
 
-
-
-
-
-
-
-
 		if (goLive) {
 			Calendar endOfDay = Calendar.getInstance();
 			Calendar early = Calendar.getInstance();
@@ -309,88 +295,6 @@ public class Main {
 		else {
 			System.out.println("All Updates Complete and currently not time to go live!");
 		}
-
-
-		//H2HLeague test = new H2HLeague(28716);
-		//test.loadH2HLeague();
-		//test.loadTeams();
-		//dbAccess.storeLeague(test);
-		//dbAccess.storeLeagueData(test);
-		//dbAccess.generatePlayerList("1");
-		//dbAccess.updatePlayers("1");
-		//dbAccess.updateScores("1");
-
-		/*
-		ClassicLeague league = new ClassicLeague(27611);
-		league.loadLeague();
-		league.loadTeams();
-		dbAccess.storeLeague(league);
-		dbAccess.storeLeagueData(league);
-
-		H2HLeague league2 = new H2HLeague(28716);
-		league2.loadH2HLeague();
-		league2.loadTeams();
-		dbAccess.storeLeague(league2);
-		dbAccess.storeLeagueData(league2);
-
-		dbAccess.generatePlayerList("1");
-		dbAccess.updatePlayers("1");
-		dbAccess.updateScores("1");
-
-
-		String gameweek = "1";
-		boolean goLive = true;
-		 */
-		/*
-		ClassicLeague league = new ClassicLeague(27611);
-		league.loadLeague();
-		league.gameWeek = "1";
-		league.addManager("1234", "1", "1000", "2");
-		league.addManager("4321", "1", "2000", "2");
-		dbAccess.storeLeague(league);
-		Team test = new Team("1234", "1", "1000", "2");
-		test.goalkeeper[0] = "130";
-		test.defenders[0] = "80";
-		test.defenders[1] = "341"; 
-		test.defenders[2] = "262";
-		test.defenders[3] = "401";
-		test.midfield[0] = "246";
-		test.midfield[1] = "226";
-		test.midfield[2] = "119";
-		test.midfield[3] = "331";
-		test.forwards[0] = "25";
-		test.forwards[1] = "229";
-		test.bench[0] = "422";
-		test.bench[1] = "162";
-		test.bench[2] = "247";
-		test.bench[3] = "227";
-		test.captains[0] = "229";
-		test.captains[1] = "119";
-		Team test2 = new Team("4321", "1", "2000", "1");
-		test2.goalkeeper[0] = "130";
-		test2.defenders[0] = "134";
-		test2.defenders[1] = "341"; 
-		test2.defenders[2] = "6";
-		test2.defenders[3] = "401";
-		test2.midfield[0] = "246";
-		test2.midfield[1] = "244";
-		test2.midfield[2] = "119";
-		test2.midfield[3] = "21";
-		test2.forwards[0] = "254";
-		test2.forwards[1] = "227";
-		test2.bench[0] = "422";
-		test2.bench[1] = "162";
-		test2.bench[2] = "247";
-		test2.bench[3] = "227";
-		test2.captains[0] = "134";
-		test2.captains[1] = "246";
-		//dbAccess.storeLeagueData(league);
-		dbAccess.storeTeamData(test);
-		dbAccess.storeTeamData(test2);
-		dbAccess.generatePlayerList("1");
-		//dbAccess.updatePlayers("1");
-		//dbAccess.updateScores("1");
-		 */
 
 		dbAccess.setWebFront("index", "Up To Date");
 		dbAccess.closeConnections();
