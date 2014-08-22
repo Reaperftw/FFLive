@@ -979,7 +979,7 @@ public class MySQLConnection {
 						+ "status = ?, "
 						+ "news = ?, "
 						+ "photo = ? "
-						+ "where playerID = ?");
+						+ "WHERE playerID = ?");
 				UpPGw.setInt(1, Integer.parseInt(gw));
 				UpPGw.setString(2, player.firstName);
 				UpPGw.setString(3, player.lastName);
@@ -1341,6 +1341,7 @@ public class MySQLConnection {
 		}
 		for(String temp: gameweeks) {
 			generatePlayerList(temp);
+			updatePlayers(temp);
 		}
 	}
 
