@@ -47,6 +47,9 @@ public class Fixtures {
 	public Fixtures(String gw) {
 		loadGameweek = gw;
 	}
+	public Fixtures(int gw) {
+		loadGameweek = Integer.toString(gw);
+	}
 	
 	public void loadFixtures() {
 		//Assuming this page shows the current gameweek

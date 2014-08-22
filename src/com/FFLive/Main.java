@@ -40,7 +40,6 @@ public class Main {
 
 		//TODO Via MINS Played, move people off the bench correctly
 		//TODO Clean up error handling
-		//TODO Position
 
 
 

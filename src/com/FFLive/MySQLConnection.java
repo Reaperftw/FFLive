@@ -90,6 +90,8 @@ public class MySQLConnection {
 			Fixtures fixture = new Fixtures();
 			fixture.loadFixtures();
 			int gw = Integer.parseInt(fixture.gameweek);
+
+
 			//CREATE all the required Gameweek Leagues...
 
 
@@ -113,12 +115,10 @@ public class MySQLConnection {
 			CTH2HFixture.setInt(1,gw);
 			CTH2HFixture.executeUpdate();
 
-
-
 			for (String leagueID : leagueIDs) {
 				PreparedStatement preparedStmt = conn.prepareStatement("INSERT INTO status (LeagueID, Gameweek, starts, kickOff, ends) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE starts = ?, kickOff = ?, ends = ?");
 				preparedStmt.setInt(1 , Integer.parseInt(leagueID));
-				preparedStmt.setInt(2 , Integer.parseInt(fixture.gameweek));
+				preparedStmt.setInt(2 , gw);
 				preparedStmt.setString(3 , fixture.startTime);
 				preparedStmt.setString(4 , fixture.kickOff);
 				preparedStmt.setString(5 , fixture.endTime);
@@ -129,12 +129,52 @@ public class MySQLConnection {
 				preparedStmt.executeUpdate();
 				preparedStmt.close();
 			}
+			
 
-			web.close();
+			if (gw != 1) {
+				int prevGW = gw -1;
+				Fixtures prevFixture = new Fixtures(prevGW);
+				prevFixture.loadFixtures();
+				//PreparedStatement CTleagueTeamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS leagues_teamsGW? (leagueID INT NOT NULL, managerID INT NOT NULL, lp INT DEFAULT 0, position INT, wins INT DEFAULT 0, loss INT DEFAULT 0, draw INT DEFAULT 0, points INT DEFAULT 0, fixture VARCHAR(2), livePoints INT, liveLP INT DEFAULT 0, liveWin INT DEFAULT 0, liveLoss INT DEFAULT 0, liveDraw INT DEFAULT 0, livePosition INT, posDifferential VARCHAR(10) DEFAULT '-', UNIQUE (leagueID, managerID))");
+				CTleagueTeamsGW.setInt(1, prevGW);
+				CTleagueTeamsGW.executeUpdate();
+
+				//PreparedStatement CTteamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS teamsGW? (managerID INT NOT NULL UNIQUE, teamName VARCHAR(25), managerName VARCHAR(120), op INT DEFAULT 0, gw INT DEFAULT 0, liveOP INT DEFAULT 0, GkID INT DEFAULT 0, DefID1 INT DEFAULT 0, DefID2 INT DEFAULT 0, DefID3 INT DEFAULT 0, DefID4 INT DEFAULT 0, DefID5 INT DEFAULT 0, MidID1 INT DEFAULT 0, MidID2 INT DEFAULT 0, MidID3 INT DEFAULT 0, MidID4 INT DEFAULT 0, MidID5 INT DEFAULT 0, ForID1 INT DEFAULT 0, ForID2 INT DEFAULT 0, ForID3 INT DEFAULT 0, BenchID1 INT DEFAULT 0, BenchID2 INT DEFAULT 0, BenchID3 INT DEFAULT 0, BenchID4 INT DEFAULT 0, captainID INT DEFAULT 0, viceCaptainID INT DEFAULT 0)");
+				CTteamsGW.setInt(1, prevGW);
+				CTteamsGW.executeUpdate();
+
+				//PreparedStatement CTPlayersGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS playersGW? (playerID INT NOT NULL UNIQUE, playerCount INT DEFAULT 1 NOT NULL, firstName VARCHAR(30), lastName VARCHAR(30), webName VARCHAR(40), score INT, gameweekBreakdown VARCHAR(150), breakdown VARCHAR(250), teamName VARCHAR(30), currentFixture VARCHAR(30), nextFixture VARCHAR(30), status VARCHAR(10), news VARCHAR(100), photo VARCHAR(30))");
+				CTPlayersGW.setInt(1,prevGW);
+				CTPlayersGW.executeUpdate();
+
+				//PreparedStatement CTH2HFixture = conn.prepareStatement("CREATE TABLE IF NOT EXISTS H2HGW? (leagueID INT NOT NULL, home VARCHAR(30), away VARCHAR(30), fixtureNo INT, UNIQUE(leagueID, home, away))");
+				CTH2HFixture.setInt(1,prevGW);
+				CTH2HFixture.executeUpdate();
+
+				for (String leagueID : leagueIDs) {
+					PreparedStatement preparedStmt = conn.prepareStatement("INSERT INTO status (LeagueID, Gameweek, starts, kickOff, ends) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE starts = ?, kickOff = ?, ends = ?");
+					preparedStmt.setInt(1 , Integer.parseInt(leagueID));
+					preparedStmt.setInt(2 , prevGW);
+					preparedStmt.setString(3 , prevFixture.startTime);
+					preparedStmt.setString(4 , prevFixture.kickOff);
+					preparedStmt.setString(5 , prevFixture.endTime);
+					preparedStmt.setString(6 , prevFixture.startTime);
+					preparedStmt.setString(7 , prevFixture.kickOff);
+					preparedStmt.setString(8 , prevFixture.endTime);
+
+					preparedStmt.executeUpdate();
+					preparedStmt.close();
+				}
+				
+
+			}
 			CTleagueTeamsGW.close();
 			CTteamsGW.close();
 			CTPlayersGW.close();
 			CTH2HFixture.close();
+
+			web.close();
+
 			System.out.println("Ready!");
 
 		} catch (SQLException e) {
@@ -165,7 +205,7 @@ public class MySQLConnection {
 		System.out.print("Checking Status of Stored Leagues...  ");
 		Map<String,List<String>> incomplete = new HashMap<String,List<String>>();
 
-		
+
 		try {
 			//Check the status table
 			Statement statement = conn.createStatement();
@@ -181,12 +221,235 @@ public class MySQLConnection {
 				Calendar startDate = (new DateParser(status.getString("starts"))).convertDate();
 				Calendar kickOff = (new DateParser(status.getString("kickOff"))).convertDate();
 				Calendar endDate = (new DateParser(status.getString("ends"))).convertDate();
-				Calendar postTime = (new DateParser(status.getString("ends"))).convertDate();
+				Calendar postDate = (new DateParser(status.getString("ends"))).convertDate();
 				//Add 2 Hours on to make sure match has finished
 				endDate.add(Calendar.HOUR_OF_DAY, 2);
 				startDate.add(Calendar.MINUTE, 30);
-				postTime.add(Calendar.DAY_OF_MONTH, 1);
+				postDate.add(Calendar.DAY_OF_MONTH, 1);
 
+				//Check the Times and update the status table
+				
+				
+				if(status.getString("started").equals("Y")) {
+					//GW Has Started, are teams store
+					if(status.getString("teamsStored").equals("Y")) {
+						//Teams Are Stored, has the gameweek now ended
+						if(status.getString("ended").equals("Y")) {
+							//Gameweek has now ended, has the post GW update been done
+							if(status.getString("postGwUpdate").equals("Y")) {
+								//All Done Nothing to Do.
+							}
+							//Ended but is after post date?
+							else if (now.after(postDate)){
+								//After Post Date, queue for post update
+								if(!incomplete.containsKey("post")) {
+									List<String> post = new ArrayList<String>();
+									post.add(leagueID + "," + gw);
+									incomplete.put("post",post);
+								}
+								else {
+									incomplete.get("post").add(leagueID + "," + gw);
+								}
+							}
+							else {
+								//Not after post date, nothing to do.
+							}
+						}
+						//Gameweek not marked as ended, check if now ended
+						else if (now.after(endDate)){
+							//Gameweek has now ended, check if after post date
+							if(now.after(postDate)) {
+								//Now is after post date, update status table and queue for post update
+								//TODO
+								generalStatusUpdate(leagueID,gw,"Y", "Y");
+								if(!incomplete.containsKey("post")) {
+									List<String> post = new ArrayList<String>();
+									post.add(leagueID + "," + gw);
+									incomplete.put("post",post);
+								}
+								else {
+									incomplete.get("post").add(leagueID + "," + gw);
+								}
+							}
+							else {
+								//Not after post date, update status table and mark to do nothing
+								//TODO
+							}
+						}
+						else {
+							//Gameweek has stated but not ended, queue to go live
+							//TODO
+							if(!incomplete.containsKey("live")) {
+								List<String> live = new ArrayList<String>();
+								live.add(leagueID + "," + gw);
+								incomplete.put("live",live);
+							}
+							else {
+								incomplete.get("live").add(leagueID + "," + gw);
+							}
+						}
+					}
+					else {
+						//Gameweek Started but teams not stored, Queue for team update...
+						//Has Gameweek now ended?
+						if (now.after(endDate)) {
+							//Gameweek has now ended, time for post?
+							if (now.after(postDate)) {
+								//After Post, Queue for Post and Update status table
+								//TODO
+								if(!incomplete.containsKey("post")) {
+									List<String> post = new ArrayList<String>();
+									post.add(leagueID + "," + gw);
+									incomplete.put("post",post);
+								}
+								else {
+									incomplete.get("post").add(leagueID + "," + gw);
+								}
+							}
+							else {
+								//Ended but not after post, queue for teams and update status
+								//TODO
+								if(!incomplete.containsKey("teams")) {
+									List<String> teams = new ArrayList<String>();
+									teams.add(leagueID + "," + gw);
+									incomplete.put("teams",teams);
+								}
+								else {
+									incomplete.get("teams").add(leagueID + "," + gw);
+								}
+							}
+						}
+						else {
+							//Not Ended, Update Status and get teams and go live
+							//TODO
+							if(!incomplete.containsKey("live")) {
+								List<String> live = new ArrayList<String>();
+								live.add(leagueID + "," + gw);
+								incomplete.put("live",live);
+							}
+							else {
+								incomplete.get("live").add(leagueID + "," + gw);
+							}
+						}
+					}
+				}
+				//Started != Y
+				else if (status.getString("teamsStored").equals("Y")) {
+					//Gameweek not marked as Started, but teams are stored, check if gameweek has now started
+					if (now.after(kickOff)) {
+						//Games Have Kicked off and teams are stored, check if gameweek has ended.
+						if(now.after(endDate)) {
+							//Gameweek has now ended, check if it is time for post update
+							if(now.after(postDate)) {
+								//Now After Post Date, Queue for Post and Update Status Table
+								//TODO
+								if(!incomplete.containsKey("post")) {
+									List<String> post = new ArrayList<String>();
+									post.add(leagueID + "," + gw);
+									incomplete.put("post",post);
+								}
+								else {
+									incomplete.get("post").add(leagueID + "," + gw);
+								}
+							}
+							else {
+								//After End Date, not time for Post, Update Status Table and Do Nothing
+								//TODO
+							}
+						}
+						else {
+							//Not After End Date, Update Status Table to Started and Queue for Live
+							//TODO
+							if(!incomplete.containsKey("live")) {
+								List<String> live = new ArrayList<String>();
+								live.add(leagueID + "," + gw);
+								incomplete.put("live",live);
+							}
+							else {
+								incomplete.get("live").add(leagueID + "," + gw);
+							}
+						}
+					}
+					//Gameweek Not Started, but teams stored, does gameweek start today?
+					else if (startDate.get(Calendar.DAY_OF_MONTH) == now.get(Calendar.DAY_OF_MONTH) && startDate.get(Calendar.MONTH) == now.get(Calendar.MONTH)) {
+						//Gameweek does start today, queue for wait, nothing to update the status with
+						//TODO
+					}
+					else {
+						//Else Gameweek does not start today, nothing to do
+					}
+				}
+				//Started != Y and teamStored != Y
+				//Check Dates
+				//Check is after Start Date, if it isnt, then it is pre gameweek and nothing to do
+				else if(now.after(startDate)) {
+					//After StartDate, is after kick off
+					if(now.after(kickOff)) {
+						//After Kick Off, is after End Date?
+						if(now.after(endDate)) {
+							//After End date, is after postUpdate?
+							if(now.after(postDate)) {
+								//After Post Date, Update Status table and queue for post
+								//TODO
+								if(!incomplete.containsKey("post")) {
+									List<String> post = new ArrayList<String>();
+									post.add(leagueID + "," + gw);
+									incomplete.put("post",post);
+								}
+								else {
+									incomplete.get("post").add(leagueID + "," + gw);
+								}
+							}
+							else {
+								//After End Date, update Status
+								//TODO
+							}
+						}
+						else {
+							//After kick off but before end date, update status table queue for live and teams
+							//TODO
+							if(!incomplete.containsKey("teams")) {
+								List<String> teams = new ArrayList<String>();
+								teams.add(leagueID + "," + gw);
+								incomplete.put("teams",teams);
+							}
+							else {
+								incomplete.get("teams").add(leagueID + "," + gw);
+							}
+							
+							if(!incomplete.containsKey("live")) {
+								List<String> live = new ArrayList<String>();
+								live.add(leagueID + "," + gw);
+								incomplete.put("live",live);
+							}
+							else {
+								incomplete.get("live").add(leagueID + "," + gw);
+							}
+						}
+					}
+					else {
+						//Not after kick off but after started, update status table and queue for teams and wait
+						//TODO
+						if(!incomplete.containsKey("teams")) {
+							List<String> teams = new ArrayList<String>();
+							teams.add(leagueID + "," + gw);
+							incomplete.put("teams",teams);
+						}
+						else {
+							incomplete.get("teams").add(leagueID + "," + gw);
+						}
+					}
+				}
+				else {
+					//Pre Gameweek and nothing to do.
+				}
+				
+				
+				
+				
+				//Old NEW LINE
+				
+				
 				if (status.getString("started").equals("Y")) {
 
 					if(status.getString("teamsStored").equals("N")) {
@@ -198,7 +461,7 @@ public class MySQLConnection {
 						else {
 							incomplete.get("teams").add(leagueID + "," + gw);
 						}
-						
+
 					}
 					//Gameweek has started, check if it has ended
 					else if(status.getString("ended").equals("Y")) {
@@ -209,7 +472,7 @@ public class MySQLConnection {
 						}
 						else if (status.getString("postGwUpdate").equals("N")) {
 
-							if (now.after(postTime)){
+							if (now.after(postDate)){
 								//Gameweek complete but mark for post-update.
 								if(!incomplete.containsKey("post")) {
 									List<String> post = new ArrayList<String>();
@@ -240,7 +503,7 @@ public class MySQLConnection {
 
 						preparedStmt.executeUpdate();
 
-						if (now.after(postTime)){
+						if (now.after(postDate)){
 							//Gameweek complete but mark for post-update.
 							if(!incomplete.containsKey("post")) {
 								List<String> post = new ArrayList<String>();
@@ -349,7 +612,7 @@ public class MySQLConnection {
 					//Check If Gameweek starts today
 					if(startDate.get(Calendar.DAY_OF_MONTH) == now.get(Calendar.DAY_OF_MONTH) && startDate.get(Calendar.MONTH) == now.get(Calendar.MONTH)){
 						//Gameweek does start today
-						
+
 						if(!incomplete.containsKey("wait")) {
 							List<String> wait = new ArrayList<String>();
 							wait.add("Teams to be finalised");
@@ -377,6 +640,22 @@ public class MySQLConnection {
 		}
 		System.out.println("Done!");
 		return incomplete;
+	}
+	
+	public void generalStatusUpdate (int leagueID, int gw, String started, String ended) {
+		try {
+			PreparedStatement preparedStmt = conn.prepareStatement("UPDATE status set started=?, ended=? where LeagueID = ? AND Gameweek = ?");
+			preparedStmt.setString(1, started);
+			preparedStmt.setString(2, ended);		
+			preparedStmt.setInt(3 , leagueID);
+			preparedStmt.setInt(4 ,gw);
+			preparedStmt.executeUpdate();
+			preparedStmt.close();
+		}
+		catch (SQLException sql) {
+			System.err.println("General Status Table Update Failed");
+			sql.printStackTrace();
+		}
 	}
 
 	public void missedUpdateStatus (String leagueID, String gw) {
@@ -427,7 +706,7 @@ public class MySQLConnection {
 		try {
 			int GW = Integer.parseInt(gw.trim());
 			Statement statement = conn.createStatement();
-			ResultSet rs = statement.executeQuery("SELECT starts FROM status WHERE Gameweek=" + GW+1);
+			ResultSet rs = statement.executeQuery("SELECT starts FROM status WHERE Gameweek=" + GW);
 			Calendar yes = (new DateParser (rs.getString("starts"))).convertDate();
 			Calendar now = Calendar.getInstance();
 			while (rs.next()) {
@@ -500,7 +779,7 @@ public class MySQLConnection {
 			System.exit(1000);
 		}
 	}
-	
+
 	public void storeLeague(H2HLeague league) {
 		try {
 			System.out.print("Storing League '" + league.leagueName + "' to DB...  ");
@@ -530,7 +809,7 @@ public class MySQLConnection {
 
 			for (Entry<String,Team> entry: league.managerMap.entrySet()) {
 
-				PreparedStatement ILeaguesTeamsGW = conn.prepareStatement("INSERT INTO leagues_teamsGW? (leagueID, managerID, liveLp, livePosition, liveWins, liveLoss, liveDraw, livePoints)  values (?, ?, ?, ?, ? ,? ,? ,?) ON DUPLICATE KEY UPDATE liveLp = ?, livePosition = ?, liveWins = ?, liveLoss = ?, liveDraw = ?, livePoints = ?");
+				PreparedStatement ILeaguesTeamsGW = conn.prepareStatement("INSERT INTO leagues_teamsGW? (leagueID, managerID, liveLp, livePosition, liveWin, liveLoss, liveDraw, livePoints)  values (?, ?, ?, ?, ? ,? ,? ,?) ON DUPLICATE KEY UPDATE liveLp = ?, livePosition = ?, liveWin = ?, liveLoss = ?, liveDraw = ?, livePoints = ?");
 				ILeaguesTeamsGW.setInt(1, gw);
 				ILeaguesTeamsGW.setInt(2, league.leagueID);
 				ILeaguesTeamsGW.setInt(3, Integer.parseInt(entry.getKey()));
@@ -578,7 +857,7 @@ public class MySQLConnection {
 			System.exit(1010);
 		}
 	}
-	
+
 	public void preStore (ClassicLeague league) {
 		try {
 			System.out.print("Storing Pre-Gameweek Data for League '" + league.leagueName + "' to DB...  ");
@@ -599,7 +878,7 @@ public class MySQLConnection {
 			PreparedStatement CTH2HFixture = conn.prepareStatement("CREATE TABLE IF NOT EXISTS H2HGW? (leagueID INT NOT NULL, home VARCHAR(30), away VARCHAR(30), fixtureNo INT, UNIQUE(leagueID, home, away))");
 			CTH2HFixture.setInt(1,gw);
 			CTH2HFixture.executeUpdate();
-			
+
 			PreparedStatement leaguesInsert = conn.prepareStatement("INSERT INTO leagues values (?, ?, 'Classic') ON DUPLICATE KEY UPDATE name = ?, type = 'Classic'");
 			leaguesInsert.setInt(1, league.leagueID);
 			leaguesInsert.setString(2, league.leagueName);
@@ -646,7 +925,7 @@ public class MySQLConnection {
 			System.exit(1030);
 		}
 	}
-	
+
 	public void preStore(H2HLeague league) {
 		try {
 			System.out.print("Storing Pre-Gameweek Data for League '" + league.leagueName + "' to DB...  ");
@@ -667,8 +946,8 @@ public class MySQLConnection {
 			PreparedStatement CTH2HFixture = conn.prepareStatement("CREATE TABLE IF NOT EXISTS H2HGW? (leagueID INT NOT NULL, home VARCHAR(30), away VARCHAR(30), fixtureNo INT, UNIQUE(leagueID, home, away))");
 			CTH2HFixture.setInt(1,gw);
 			CTH2HFixture.executeUpdate();
-			
-			
+
+
 			PreparedStatement leaguesInsertH2H = conn.prepareStatement("INSERT INTO leagues values (?, ?, 'H2H') ON DUPLICATE KEY UPDATE name = ?, type = 'H2H'");
 			leaguesInsertH2H.setInt(1, league.leagueID);
 			leaguesInsertH2H.setString(2, league.leagueName);
