@@ -670,9 +670,5 @@ For more information on this, and how to apply and follow the GNU GPL, see
 into proprietary programs.  If your program is a subroutine library, you
 may consider it more useful to permit linking proprietary applications with
 the library.  If this is what you want to do, use the GNU Lesser General
-Public License instead of this License.  But first, please read
-<<<<<<< HEAD
+Public License instead of this License.  But first, please read 
 <http://www.gnu.org/philosophy/why-not-lgpl.html>.
-=======
-<http://www.gnu.org/philosophy/why-not-lgpl.html>.
->>>>>>> c08520c69c5023fd11f3056bd108ec4e7b6ac881
