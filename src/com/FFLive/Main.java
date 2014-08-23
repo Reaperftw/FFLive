@@ -205,7 +205,7 @@ public class Main {
 
 							}
 							if (incomplete.containsKey("live")) {
-								for (String temp: incomplete.get("teams")) {
+								for (String temp: incomplete.get("live")) {
 									String gw = temp.split(",")[1];
 									String leagueID = temp.split(",")[0];
 
@@ -222,9 +222,9 @@ public class Main {
 								}
 							}
 							if (incomplete.containsKey("wait")) {
-								for (String temp: incomplete.get("teams")) {
+								for (String temp: incomplete.get("wait")) {
 									System.out.print("Will wait for " + temp + ", End program by creating stop.txt in this directory...  ");
-									repeat = true;
+									//repeat = true;
 									wait = true;
 								}
 							}
@@ -234,14 +234,14 @@ public class Main {
 			if (wait) {
 				try {
 
-					dbAccess.setWebFront("index", "Waiting for data to become available");
+					dbAccess.setWebFront("index", "Waiting for GW to Start");
 					Thread.sleep(120000);
 				} catch (InterruptedException e) {
 					System.err.println(e);
 					break;
 				}
 				if (new File("stop.txt").exists()) {
-					System.out.print("Trigger File found, exiting...  ");
+					System.out.println("Trigger File found, exiting...  ");
 					break;
 				}
 			}

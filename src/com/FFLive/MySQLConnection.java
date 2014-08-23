@@ -494,6 +494,17 @@ public class MySQLConnection {
 						}
 					}
 				}
+				else if (startDate.get(Calendar.DAY_OF_MONTH) == now.get(Calendar.DAY_OF_MONTH) && startDate.get(Calendar.MONTH) == now.get(Calendar.MONTH)) {
+					//Gameweek does start today, queue for wait, nothing to update the status with
+					if(!incomplete.containsKey("wait")) {
+						List<String> wait = new ArrayList<String>();
+						wait.add("Teams to be finalised");
+						incomplete.put("wait",wait);
+					}
+					else {
+						incomplete.get("wait").add("Teams to be finalised");
+					}
+				}
 				else {
 					//Pre Gameweek and nothing to do.
 				}
