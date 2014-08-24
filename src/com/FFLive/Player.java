@@ -106,31 +106,26 @@ public class Player {
 		}
 		catch(ConnectException c) {
 			if(timeoutCheck() > 3) {
-				System.err.println("Too Many Timeouts.. Quitting");
-				System.exit(406);
+				System.err.println("Too Many Timeouts.. Skipping");
 			}
 			System.out.println("Timeout Connecting, Retrying...");
 			getPlayer();
 		}
 		catch(SocketTimeoutException e) {
 			if(timeoutCheck() > 3) {
-				System.err.println("Too Many Timeouts.. Quitting");
-				System.exit(402);
+				System.err.println("Too Many Timeouts.. Skipping");
 			}
 			System.out.println("Timeout Connecting, Retrying...");
 			getPlayer();
 		}
 		catch (UnknownHostException g) {
-			System.err.println("No Connection... Quitting");
-			System.exit(400);
+			System.err.println("No Connection... Skipping");
 		}
 		catch (NoRouteToHostException h) {
-			System.err.println("No Connection... Quitting");
-			System.exit(401);
+			System.err.println("No Connection... Skipping");
 		}
 		catch (IOException f) {
 			System.out.println("In getPlayer: " + f);
-			System.exit(404);
 		}
 	}
 	

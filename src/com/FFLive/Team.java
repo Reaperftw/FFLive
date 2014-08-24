@@ -168,31 +168,26 @@ public class Team {
 		}
 		catch (ConnectException c) {
 			if(timeoutCheck() > 4) {
-				System.err.println("Too Many Timeouts.. Quitting");
-				System.exit(301);
+				System.err.println("Too Many Timeouts.. Skipping");
 			}
 			System.out.println("-- Timeout Connecting, Retrying...");
 			getTeam();
 		}
 		catch(SocketTimeoutException e) {
 			if(timeoutCheck() > 4) {
-				System.err.println("Too Many Timeouts.. Quitting");
-				System.exit(300);
+				System.err.println("Too Many Timeouts.. Skipping");
 			}
 			System.out.println("-- Timeout Connecting, Retrying...");
 			getTeam();
 		}
 		catch (UnknownHostException g) {
 			System.err.println("No Connection... Quitting");
-			System.exit(305);
 		}
 		catch (NoRouteToHostException h) {
-			System.err.println("No Connection... Quitting");
-			System.exit(306);
+			System.err.println("No Connection... Skipping");
 		}
 		catch(IOException f) {
 			System.err.println("-- In addPlayers: " + f);
-			System.exit(302);
 		}
 		
 	}

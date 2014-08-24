@@ -224,7 +224,7 @@ public class Main {
 							if (incomplete.containsKey("wait")) {
 								for (String temp: incomplete.get("wait")) {
 									System.out.print("Will wait for " + temp + ", End program by creating stop.txt in this directory...  ");
-									//repeat = true;
+									repeat = true;
 									wait = true;
 								}
 							}

@@ -182,27 +182,23 @@ public class H2HLeague {
 		}
 		catch (ConnectException c) {
 			if (timeoutCheck() > 10) {
-				System.err.println("Too Many Timeouts... Quitting");
-				System.exit(506);
+				System.err.println("Too Many Timeouts... Skipping");
 			}
 			System.out.println("Timeout Connecting. Retrying...");
 			loadH2HLeague();
 		}
 		catch (SocketTimeoutException e) {
 			if (timeoutCheck() > 10) {
-				System.err.println("Too Many Timeouts... Quitting");
-				System.exit(502);
+				System.err.println("Too Many Timeouts... Skipping");
 			}
 			System.out.println("Timeout Connecting. Retrying...");
 			loadH2HLeague();
 		}
 		catch (NoRouteToHostException h) {
-			System.err.println("No Connection... Quitting");
-			System.exit(505);
+			System.err.println("No Connection... Skipping");
 		}
 		catch (UnknownHostException g) {
-			System.err.println("No Connection... Quitting");
-			System.exit(501);
+			System.err.println("No Connection... Skipping");
 		}
 		catch (IOException f) {
 			System.err.println("--In loadH2HLeague: " + f);

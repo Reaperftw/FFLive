@@ -77,31 +77,26 @@ public class Fixtures {
 		}
 		catch (ConnectException c) {
 			if (timeoutCheck() > 10) {
-				System.err.println("Too Many Timeouts... Quitting");
-				System.exit(1103);
+				System.err.println("Too Many Timeouts... Skipping");
 			}
 			System.out.println("Timeout Connecting. Retrying...");
 			loadFixtures();
 		}
 		catch (SocketTimeoutException e) {
 			if (timeoutCheck() > 10) {
-				System.err.println("Too Many Timeouts... Quitting");
-				System.exit(1102);
+				System.err.println("Too Many Timeouts... Skipping");
 			}
 			System.out.println("Timeout Connecting. Retrying...");
 			loadFixtures();
 		}
 		catch (UnknownHostException g) {
-			System.err.println("No Connection... Quitting");
-			System.exit(1100);
+			System.err.println("No Connection... Skipping");
 		}
 		catch (NoRouteToHostException h) {
-			System.err.println("No Connection... Quitting");
-			System.exit(1101);
+			System.err.println("No Connection... Skipping");
 		}
 		catch (IOException f) {
 			System.err.println("In Fixtures: " + f);
-			System.exit(1103);
 		}
 	}
 

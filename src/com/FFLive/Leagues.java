@@ -89,31 +89,26 @@ public class Leagues {
 		}
 		catch (ConnectException c) {
 			if (timeoutCheck() > 10) {
-				System.err.println("Too Many Timeouts... Quitting");
-				System.exit(102);
+				System.err.println("Too Many Timeouts... Skipping");
 			}
 			System.out.println("Timeout Connecting. Retrying...");
 			addLeague(leagueID);
 		}
 		catch (SocketTimeoutException e) {
 			if (timeoutCheck() > 10) {
-				System.err.println("Too Many Timeouts... Quitting");
-				System.exit(102);
+				System.err.println("Too Many Timeouts... Skipping");
 			}
 			System.out.println("Timeout Connecting. Retrying...");
 			addLeague(leagueID);
 		}
 		catch (UnknownHostException g) {
-			System.err.println("No Connection... Quitting");
-			System.exit(100);
+			System.err.println("No Connection... Skipping");
 		}
 		catch (NoRouteToHostException h) {
-			System.err.println("No Connection... Quitting");
-			System.exit(101);
+			System.err.println("No Connection... Skipping");
 		}
 		catch (IOException f) {
 			System.err.println("--In loadLeague: " + f);
-			System.exit(104);
 		}
 		catch (NullPointerException i) {
 			System.err.println("This League either contains no teams or the season has not yet begun!");
