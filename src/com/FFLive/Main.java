@@ -53,7 +53,7 @@ public class Main {
 		//Initial open
 		Calendar currentDate = Calendar.getInstance();
 		System.out.println("");
-		System.out.println("FFLive v3.0.8 - Started " + currentDate.getTime());
+		System.out.println("FFLive v3.0.9 - Started " + currentDate.getTime());
 		System.out.print("Loading Config...  ");
 
 		//Load Config File
@@ -185,7 +185,7 @@ public class Main {
 						}						
 					}
 					dbAccess.postUpdate(post);
-					System.out.println("Done!");
+					System.out.println("Finished Post-GW Updates!");
 					repeat = true;
 					//If a wait is issued, will cancel the wait to repeat first.
 					wait=false;

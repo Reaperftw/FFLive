@@ -1036,7 +1036,8 @@ public class MySQLConnection {
 	}
 
 	public void generatePlayerList(String gameWeek) {
-		System.out.print("Generating Player List..  ");
+		Calendar now = Calendar.getInstance();
+		System.out.print(now.getTime() + " Generating Player List..  ");
 		try {
 			int gw = Integer.parseInt(gameWeek);
 			String[] positions = {"GkID","DefID1","DefID2","DefID3","DefID4","DefID5","MidID1","MidID2","MidID3","MidID4","MidID5","ForID1","ForID2","ForID3","BenchID1","BenchID2","BenchID3","BenchID4"};
@@ -1080,7 +1081,8 @@ public class MySQLConnection {
 	}
 
 	public void updateScores(String gw) {
-		System.out.print("Updating Gameweek Scores...  ");
+		Calendar now = Calendar.getInstance();
+		System.out.print(now.getTime() + " Updating Gameweek Scores...  ");
 		int gameweek = Integer.parseInt(gw);
 		try {
 
