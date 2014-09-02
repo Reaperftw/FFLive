@@ -45,7 +45,7 @@ public class Player {
 	public String playerTeam = null;
 	public String position = null;
 	public int playerScore = 0;
-	public String scoreBreakdown = null;
+	//public String scoreBreakdown = null;
 	public String gameweekBreakdown = null;
 	public String currentFixture = null;
 	public String nextFixture = null;
@@ -81,7 +81,7 @@ public class Player {
 			*/
 			playerScore = Integer.parseInt(playerValues.get("event_total").toString());
 			gameweekBreakdown = playerValues.get("event_explain").toString();
-			scoreBreakdown = playerValues.get("fixture_history").toString();
+			//scoreBreakdown = playerValues.get("fixture_history").toString();
 			currentFixture = playerValues.get("current_fixture").toString();
 			nextFixture = playerValues.get("next_fixture").toString();
 			status = playerValues.get("status").toString();

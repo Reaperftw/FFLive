@@ -258,6 +258,9 @@ public class MySQLConnection {
 							if(status.getString("postGwUpdate").equals("Y")) {
 								//All Done Nothing to Do.
 							}
+							else if(status.getString("postGwUpdate").equals("F")) {
+								//Past the Post GW Update Time so Ignore
+							}
 							//Ended but is after post date?
 							else if (now.after(postDate)){
 								//After Post Date, queue for post update
@@ -413,11 +416,11 @@ public class MySQLConnection {
 
 						if(!incomplete.containsKey("wait")) {
 							List<String> wait = new ArrayList<String>();
-							wait.add("Teams to be finalised");
+							wait.add("Matches to Kick-Off..");
 							incomplete.put("wait",wait);
 						}
 						else {
-							incomplete.get("wait").add("Teams to be finalised");
+							incomplete.get("wait").add("Matches to Kick-Off..");
 						}
 					}
 					else {
@@ -486,11 +489,11 @@ public class MySQLConnection {
 						}
 						if(!incomplete.containsKey("wait")) {
 							List<String> wait = new ArrayList<String>();
-							wait.add("Teams to be finalised");
+							wait.add("Matches to Kick-Off..");
 							incomplete.put("wait",wait);
 						}
 						else {
-							incomplete.get("wait").add("Teams to be finalised");
+							incomplete.get("wait").add("Matches to Kick-Off..");
 						}
 					}
 				}
@@ -519,7 +522,7 @@ public class MySQLConnection {
 			System.exit(1003);
 		}
 		catch (NullPointerException n) {
-			System.out.println("Data is Missing from the DB, run --fix to repair..");
+			System.out.println("Data is Missing from the DB");
 			System.err.println(n);
 			System.exit(1005);
 		}
@@ -983,7 +986,7 @@ public class MySQLConnection {
 						+ "webName = ?, "
 						+ "score = ?, "
 						+ "gameweekBreakdown = ?,"
-						+ "breakdown = ?, "
+						//+ "breakdown = ?, "
 						+ "teamName = ?, "
 						+ "currentFixture = ?, "
 						+ "nextFixture = ?, "
@@ -997,14 +1000,14 @@ public class MySQLConnection {
 				UpPGw.setString(4, player.playerName);
 				UpPGw.setInt(5, player.playerScore);
 				UpPGw.setString(6, player.gameweekBreakdown);
-				UpPGw.setString(7, player.scoreBreakdown);
-				UpPGw.setString(8, player.playerTeam);
-				UpPGw.setString(9, player.currentFixture);
-				UpPGw.setString(10, player.nextFixture);
-				UpPGw.setString(11, player.status);
-				UpPGw.setString(12, player.news);
-				UpPGw.setString(13, player.photo);
-				UpPGw.setInt(14, Integer.parseInt(player.playerID));
+				//UpPGw.setString(7, player.scoreBreakdown);
+				UpPGw.setString(7, player.playerTeam);
+				UpPGw.setString(8, player.currentFixture);
+				UpPGw.setString(9, player.nextFixture);
+				UpPGw.setString(10, player.status);
+				UpPGw.setString(11, player.news);
+				UpPGw.setString(12, player.photo);
+				UpPGw.setInt(13, Integer.parseInt(player.playerID));
 				UpPGw.executeUpdate();
 				/*updateSt.executeUpdate("UPDATE playersGW" + gw + " set "
 						+ "firstName = '" + player.firstName + "', "

@@ -53,7 +53,7 @@ public class Main {
 		//Initial open
 		Calendar currentDate = Calendar.getInstance();
 		System.out.println("");
-		System.out.println("FFLive v3.0.7 - Started " + currentDate.getTime());
+		System.out.println("FFLive v3.0.8 - Started " + currentDate.getTime());
 		System.out.print("Loading Config...  ");
 
 		//Load Config File
@@ -152,88 +152,87 @@ public class Main {
 
 		boolean goLive = false;
 		String gameweek = "0";
-		boolean wait = true;
-		
-		while(wait) {
-			wait = false;
+		boolean wait = false;
 
-					while(repeat) {
-						repeat = false;
-						//Check Status DB for problems and where we are in the gameweek
-						Map<String, List<String>> incomplete = dbAccess.statusCheck(); 
+		while(repeat) {
+			repeat = false;
+			//Check Status DB for problems and where we are in the gameweek
+			Map<String, List<String>> incomplete = dbAccess.statusCheck(); 
 
-						if(!incomplete.isEmpty()) {
-							dbAccess.setWebFront("index", "Checking for Updates");
+			if(!incomplete.isEmpty()) {
+				dbAccess.setWebFront("index", "Checking for Updates");
 
-							if (incomplete.containsKey("post")) {
+				if (incomplete.containsKey("wait")) {
+					for (String temp: incomplete.get("wait")) {
+						System.out.println("Will wait for " + temp);
+						repeat = true;
+						wait = true;
+					}
+				}
+				
+				if (incomplete.containsKey("post")) {
 
-								for (String temp :incomplete.get("post")) {
-									String gw = temp.split(",")[1];
-									String leagueID = temp.split(",")[0];
-									if (dbAccess.nextGWStarted(gw)) {
-										System.out.println("The next gameweek has alraedy started, Post-Gameweek Data will be out of date!");
-										dbAccess.missedUpdateStatus(leagueID, gw);
-									}
-									else {
-										System.out.print("Processing Post GW Updates for " + leagueID + "...  ");
-										post.addLeague(leagueID);	
-									}						
-								}
-								dbAccess.postUpdate(post);
-								System.out.println("Done!");
-								repeat = true;
+					for (String temp :incomplete.get("post")) {
+						String gw = temp.split(",")[1];
+						String leagueID = temp.split(",")[0];
+						if (dbAccess.nextGWStarted(gw)) {
+							System.out.println("The next gameweek has alraedy started, Post-Gameweek Data will be out of date!");
+							dbAccess.missedUpdateStatus(leagueID, gw);
+						}
+						else {
+							System.out.print("Processing Post GW Updates for " + leagueID + "...  ");
+							post.addLeague(leagueID);	
+						}						
+					}
+					dbAccess.postUpdate(post);
+					System.out.println("Done!");
+					repeat = true;
+					//If a wait is issued, will cancel the wait to repeat first.
+					wait=false;
 
-							}
-							if (incomplete.containsKey("teams")) {
-								for (String temp: incomplete.get("teams")) {
-									String gw = temp.split(",")[1];
-									String leagueID = temp.split(",")[0];
+				}
+				if (incomplete.containsKey("teams")) {
+					for (String temp: incomplete.get("teams")) {
+						String gw = temp.split(",")[1];
+						String leagueID = temp.split(",")[0];
 
-									if (leagueIDs.contains(leagueID)) {
-										System.out.println("Loading Teams for " + leagueID + " for GW:" + gw + "...");
-										Leagues teams = new Leagues();
-										teams.addLeague(leagueID);
-										dbAccess.teamUpdate(gw, teams);
-									}
-									else {
-										System.out.println("Removing " + leagueID + " from the Update List, as it is not in the config...  ");
-										dbAccess.removeLeague(leagueID, gw);
-									}
-
-								}
-								repeat = true;
-
-							}
-							if (incomplete.containsKey("live")) {
-								for (String temp: incomplete.get("live")) {
-									String gw = temp.split(",")[1];
-									String leagueID = temp.split(",")[0];
-
-									if (leagueIDs.contains(leagueID)) {
-										System.out.println("Adding League " + leagueID + " to Live Update Queue!");
-										live.addLeague(leagueID);
-										goLive = true;
-										gameweek = gw;
-									}
-									else {
-										System.out.println("Removing " + leagueID + " from the Update List, as it is not in the config...  ");
-										dbAccess.removeLeague(leagueID, gw);
-									}
-								}
-							}
-							if (incomplete.containsKey("wait")) {
-								for (String temp: incomplete.get("wait")) {
-									System.out.print("Will wait for " + temp + ", End program by creating stop.txt in this directory...  ");
-									repeat = true;
-									wait = true;
-								}
-							}
+						if (leagueIDs.contains(leagueID)) {
+							System.out.println("Loading Teams for " + leagueID + " for GW:" + gw + "...");
+							Leagues teams = new Leagues();
+							teams.addLeague(leagueID);
+							dbAccess.teamUpdate(gw, teams);
+						}
+						else {
+							System.out.println("Removing " + leagueID + " from the Update List, as it is not in the config...  ");
+							dbAccess.removeLeague(leagueID, gw);
 						}
 
 					}
+					repeat = true;
+
+				}
+				if (incomplete.containsKey("live")) {
+					for (String temp: incomplete.get("live")) {
+						String gw = temp.split(",")[1];
+						String leagueID = temp.split(",")[0];
+
+						if (leagueIDs.contains(leagueID)) {
+							System.out.println("Adding League " + leagueID + " to Live Update Queue!");
+							live.addLeague(leagueID);
+							goLive = true;
+							gameweek = gw;
+						}
+						else {
+							System.out.println("Removing " + leagueID + " from the Update List, as it is not in the config...  ");
+							dbAccess.removeLeague(leagueID, gw);
+						}
+					}
+				}
+				
+			}
 			if (wait) {
 				try {
-
+					System.out.println("Create stop.txt to end program");
 					dbAccess.setWebFront("index", "Waiting for GW to Start");
 					Thread.sleep(120000);
 				} catch (InterruptedException e) {
@@ -249,6 +248,9 @@ public class Main {
 		}
 
 
+
+
+
 		if (goLive) {
 			Calendar endOfDay = Calendar.getInstance();
 			Calendar early = Calendar.getInstance();
@@ -259,7 +261,7 @@ public class Main {
 			early.set(Calendar.MINUTE, 0);
 
 			dbAccess.setWebFrontGW("index", Integer.parseInt(gameweek));
-			
+
 			if (new File("stop.txt").exists()) {
 				//System.out.print("Trigger File found, exiting...  ");
 			}
