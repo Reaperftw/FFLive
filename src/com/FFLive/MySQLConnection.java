@@ -106,7 +106,7 @@ public class MySQLConnection {
 			Fixtures fixture = new Fixtures();
 			fixture.loadFixtures();
 			int gw = Integer.parseInt(fixture.gameweek);
-			
+
 			//Set the correct gameweek on the front of the webpage
 			Calendar now = Calendar.getInstance();
 			if(now.before(new DateParser(fixture.kickOff).convertDate())) {
@@ -115,7 +115,7 @@ public class MySQLConnection {
 			else {
 				setWebFrontGW("index",gw);
 			}
-				
+
 
 
 			//CREATE all the required Gameweek Leagues...
@@ -915,51 +915,53 @@ public class MySQLConnection {
 	public void storeTeamData (Team team) {
 		Statement statement = null;
 		try {
-			//String teamsGW = "teamsGW" + team.GW;
-			statement = conn.createStatement();
-			//Make a general update string to bundle DB changes into one command. Note, adding leading space on subsequent commands.
-			String updateString = "UPDATE teamsGW" + team.GW + " set ";
-			/*for (Entry<String, String> entry: team.goalkeeper.entrySet()) {
+			if (!team.managerID.equals("0")) {
+				//String teamsGW = "teamsGW" + team.GW;
+				statement = conn.createStatement();
+				//Make a general update string to bundle DB changes into one command. Note, adding leading space on subsequent commands.
+				String updateString = "UPDATE teamsGW" + team.GW + " set ";
+				/*for (Entry<String, String> entry: team.goalkeeper.entrySet()) {
 				if (entry.getValue().equals("C")
 				statement.executeUpdate("INSERT INTO ");
 			}*/
-			//Only 1 GK, add to update string
-			if (!team.goalkeeper[0].equals("0")) {
-				updateString += "GkID = " + team.goalkeeper[0];
-			}
-			//statement.executeUpdate("INSERT INTO playersGW" + team.GW + " (playerID) values (" + team.goalkeeper[0] + ") ON DUPLICATE KEY UPDATE playerCount = playerCount + 1");
-			int n = 1;
-			for (String playerID : team.defenders) {
-				if (!playerID.equals("0")) {
-					updateString += ", DefID" + n++ + " = " + playerID;
+				//Only 1 GK, add to update string
+				if (!team.goalkeeper[0].equals("0")) {
+					updateString += "GkID = " + team.goalkeeper[0];
+				}
+				//statement.executeUpdate("INSERT INTO playersGW" + team.GW + " (playerID) values (" + team.goalkeeper[0] + ") ON DUPLICATE KEY UPDATE playerCount = playerCount + 1");
+				int n = 1;
+				for (String playerID : team.defenders) {
+					if (!playerID.equals("0")) {
+						updateString += ", DefID" + n++ + " = " + playerID;
+						//statement.executeUpdate("INSERT INTO playersGW" + team.GW + " (playerID) values (" + playerID + ")  ON DUPLICATE KEY UPDATE playerCount = playerCount + 1");
+					}
+				}
+				n = 1;
+				for (String playerID : team.midfield) {
+					if (!playerID.equals("0")) {
+						updateString += ", MidID" + n++ + " = " + playerID;
+						//statement.executeUpdate("INSERT INTO playersGW" + team.GW + " (playerID) values (" + playerID + ") ON DUPLICATE KEY UPDATE playerCount = playerCount + 1");
+					}
+				}
+				n = 1;
+				for (String playerID : team.forwards) {
+					if (!playerID.equals("0")) {
+						updateString += ", ForID" + n++ + " = " + playerID;
+						//statement.executeUpdate("INSERT INTO playersGW" + team.GW + " (playerID) values (" + playerID + ")  ON DUPLICATE KEY UPDATE playerCount = playerCount + 1");
+					}
+				}
+				n = 1;
+				for (String playerID : team.bench) {
+					updateString += ", BenchID" + n++ + " = " + playerID;
 					//statement.executeUpdate("INSERT INTO playersGW" + team.GW + " (playerID) values (" + playerID + ")  ON DUPLICATE KEY UPDATE playerCount = playerCount + 1");
 				}
-			}
-			n = 1;
-			for (String playerID : team.midfield) {
-				if (!playerID.equals("0")) {
-					updateString += ", MidID" + n++ + " = " + playerID;
-					//statement.executeUpdate("INSERT INTO playersGW" + team.GW + " (playerID) values (" + playerID + ") ON DUPLICATE KEY UPDATE playerCount = playerCount + 1");
-				}
-			}
-			n = 1;
-			for (String playerID : team.forwards) {
-				if (!playerID.equals("0")) {
-					updateString += ", ForID" + n++ + " = " + playerID;
-					//statement.executeUpdate("INSERT INTO playersGW" + team.GW + " (playerID) values (" + playerID + ")  ON DUPLICATE KEY UPDATE playerCount = playerCount + 1");
-				}
-			}
-			n = 1;
-			for (String playerID : team.bench) {
-				updateString += ", BenchID" + n++ + " = " + playerID;
-				//statement.executeUpdate("INSERT INTO playersGW" + team.GW + " (playerID) values (" + playerID + ")  ON DUPLICATE KEY UPDATE playerCount = playerCount + 1");
-			}
-			updateString += ", captainID = " + team.captains[0];
-			updateString += ", viceCaptainID = " + team.captains[1];
-			updateString += " where managerID = " + team.managerID;
-			statement.executeUpdate(updateString);
+				updateString += ", captainID = " + team.captains[0];
+				updateString += ", viceCaptainID = " + team.captains[1];
+				updateString += " where managerID = " + team.managerID;
+				statement.executeUpdate(updateString);
 
-			statement.close();
+				statement.close();
+			}
 		}
 		catch (Exception e) {
 			//TODO Error Handle
@@ -978,7 +980,7 @@ public class MySQLConnection {
 			//statement.executeQuery("SELECT playerID FROM playersGW" + gw);
 
 			while (playerList.next()) {
-				Player player = new Player(Integer.toString(playerList.getInt("playerID")));
+				Player player = new Player(Integer.toString(playerList.getInt("playerID")),gw);
 				player.getPlayer();
 				PreparedStatement UpPGw = conn.prepareStatement("UPDATE playersGW? set "
 						+ "firstName =?, "
@@ -1048,14 +1050,24 @@ public class MySQLConnection {
 
 
 			while (rs.next()) {
-				for(String temp: positions) {
-					int player = rs.getInt(temp);
-					if (player != 0) {
-						PreparedStatement InsertPS = conn.prepareStatement("INSERT INTO playersGW? (playerID) values (?) ON DUPLICATE KEY UPDATE playerCount = playerCount + 1");
-						InsertPS.setInt(1, gw);
-						InsertPS.setInt(2, rs.getInt(temp));
-						InsertPS.executeUpdate();
-						InsertPS.close();
+				if(rs.getInt("managerID")== 0) {
+					PreparedStatement InsertPS = conn.prepareStatement("INSERT INTO playersGW? (playerID) values (?) ON DUPLICATE KEY UPDATE playerCount = playerCount + 1");
+					InsertPS.setInt(1, gw);
+					InsertPS.setInt(2, -1);
+					InsertPS.executeUpdate();
+					InsertPS.close();
+
+				}
+				else {
+					for(String temp: positions) {
+						int player = rs.getInt(temp);
+						if (player != 0) {
+							PreparedStatement InsertPS = conn.prepareStatement("INSERT INTO playersGW? (playerID) values (?) ON DUPLICATE KEY UPDATE playerCount = playerCount + 1");
+							InsertPS.setInt(1, gw);
+							InsertPS.setInt(2, rs.getInt(temp));
+							InsertPS.executeUpdate();
+							InsertPS.close();
+						}
 					}
 				}
 			}
@@ -1080,56 +1092,78 @@ public class MySQLConnection {
 			while(teams.next()) {
 				int manId = teams.getInt("managerID");
 				int gwScore = 0;
-				for (String position: positions) {
-					PreparedStatement Splayers = conn.prepareStatement("SELECT score from playersGW? JOIN teamsGW? on playersGW?.playerid = teamsGW?." + position + " WHERE managerID = ?");
-					Splayers.setInt(1, gameweek);
-					Splayers.setInt(2, gameweek);
-					Splayers.setInt(3, gameweek);
-					Splayers.setInt(4, gameweek);
-					Splayers.setInt(5, manId);
-
-					ResultSet score = Splayers.executeQuery();
-					while(score.next()){
-						gwScore += score.getInt("score");	
+				if (manId == 0) {
+					//The average team so update its gameweek score with the dummy average player
+					PreparedStatement SAvPlayer = conn.prepareStatement("SELECT score from playersGW? WHERE playerID = -1");
+					SAvPlayer.setInt(1, gameweek);
+					ResultSet avPlayer = SAvPlayer.executeQuery();
+					while(avPlayer.next()) {
+						gwScore = avPlayer.getInt("score");
 					}
-					Splayers.close();
+
+					SAvPlayer.close();
+					PreparedStatement UAvScore = conn.prepareStatement("UPDATE teamsGW? set gw = ? WHERE managerID = ?");
+					UAvScore.setInt(1, gameweek);
+					UAvScore.setInt(2, gwScore);
+					UAvScore.executeUpdate();
+					UAvScore.close();
+
 				}
-				//Adds on the captain score again, unless 0 then it adds on the vice captain score (assuming that 0 means he has not played, will make this based on mins played at a later date.
-				PreparedStatement captain = conn.prepareStatement("SELECT score from playersGW? JOIN teamsGW? on playersGW?.playerid = teamsGW?.captainID WHERE managerID = ?");
-				captain.setInt(1, gameweek);
-				captain.setInt(2, gameweek);
-				captain.setInt(3, gameweek);
-				captain.setInt(4, gameweek);
-				captain.setInt(5, manId);
-				ResultSet RSScore = captain.executeQuery();
-				while(RSScore.next()) {
-					int capScore = RSScore.getInt("score");
-					if (capScore == 0) {
-						PreparedStatement viceCap = conn.prepareStatement("SELECT score from playersGW? JOIN teamsGW? on playersGW?.playerid = teamsGW?.viceCaptainID WHERE managerID = ?");
-						viceCap.setInt(1, gameweek);
-						viceCap.setInt(2, gameweek);
-						viceCap.setInt(3, gameweek);
-						viceCap.setInt(4, gameweek);
-						viceCap.setInt(5, manId);
-						ResultSet RSViceScore = viceCap.executeQuery();
-						while(RSViceScore.next()){
-							gwScore += RSScore.getInt("score");
+				else {
+
+					for (String position: positions) {
+						PreparedStatement Splayers = conn.prepareStatement("SELECT score from playersGW? JOIN teamsGW? on playersGW?.playerid = teamsGW?." + position + " WHERE managerID = ?");
+						Splayers.setInt(1, gameweek);
+						Splayers.setInt(2, gameweek);
+						Splayers.setInt(3, gameweek);
+						Splayers.setInt(4, gameweek);
+						Splayers.setInt(5, manId);
+
+						ResultSet score = Splayers.executeQuery();
+						while(score.next()){
+							gwScore += score.getInt("score");	
 						}
-						viceCap.close();
+						Splayers.close();
 					}
-					else {
-						gwScore += capScore;
-					}
-				}
-				RSScore.close();
 
-				PreparedStatement UScore = conn.prepareStatement("UPDATE teamsGW? set gw = ?, liveOP = OP + ? WHERE managerID = ?");
-				UScore.setInt(1, gameweek);
-				UScore.setInt(2, gwScore);
-				UScore.setInt(3, gwScore);
-				UScore.setInt(4, manId);
-				UScore.executeUpdate();
-				UScore.close();
+					//Adds on the captain score again, unless 0 then it adds on the vice captain score (assuming that 0 means he has not played, will make this based on mins played at a later date.
+					//TODO check mins played
+					PreparedStatement captain = conn.prepareStatement("SELECT score from playersGW? JOIN teamsGW? on playersGW?.playerid = teamsGW?.captainID WHERE managerID = ?");
+					captain.setInt(1, gameweek);
+					captain.setInt(2, gameweek);
+					captain.setInt(3, gameweek);
+					captain.setInt(4, gameweek);
+					captain.setInt(5, manId);
+					ResultSet RSScore = captain.executeQuery();
+					while(RSScore.next()) {
+						int capScore = RSScore.getInt("score");
+						if (capScore == 0) {
+							PreparedStatement viceCap = conn.prepareStatement("SELECT score from playersGW? JOIN teamsGW? on playersGW?.playerid = teamsGW?.viceCaptainID WHERE managerID = ?");
+							viceCap.setInt(1, gameweek);
+							viceCap.setInt(2, gameweek);
+							viceCap.setInt(3, gameweek);
+							viceCap.setInt(4, gameweek);
+							viceCap.setInt(5, manId);
+							ResultSet RSViceScore = viceCap.executeQuery();
+							while(RSViceScore.next()){
+								gwScore += RSScore.getInt("score");
+							}
+							viceCap.close();
+						}
+						else {
+							gwScore += capScore;
+						}
+					}
+					RSScore.close();
+
+					PreparedStatement UScore = conn.prepareStatement("UPDATE teamsGW? set gw = ?, liveOP = OP + ? WHERE managerID = ?");
+					UScore.setInt(1, gameweek);
+					UScore.setInt(2, gwScore);
+					UScore.setInt(3, gwScore);
+					UScore.setInt(4, manId);
+					UScore.executeUpdate();
+					UScore.close();
+				}
 				PreparedStatement ULeagueScore = conn.prepareStatement("UPDATE leagues_teamsGW? set liveLP = lp + ? WHERE managerID = ?");
 				ULeagueScore.setInt(1, gameweek);
 				ULeagueScore.setInt(2, gwScore);

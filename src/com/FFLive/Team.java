@@ -40,12 +40,12 @@ public class Team {
 	public Map <String, String> forwards = new HashMap<String, String>(3);
 	public Map <String, String> bench = new HashMap<String, String>(4);*/
 	//Values initiated as null for a sanity check later on in the program that can be handled if there was a failure or mistake retrieving team data
-	public String[] goalkeeper = {null};
-	public String[] defenders = {null, null, null, "0", "0"};
-	public String[] midfield = {null, null, "0", "0", "0",};
-	public String[] forwards = {null, "0", "0"};
+	public String[] goalkeeper = {"0"};
+	public String[] defenders = {"0", "0", "0", "0", "0"};
+	public String[] midfield = {"0", "0", "0", "0", "0",};
+	public String[] forwards = {"0", "0", "0"};
 	public String[] bench = {"0", "0", "0", "0"};
-	public String[] captains = {null, null};
+	public String[] captains = {"0", "0"};
 	public String managerID;
 	public String GW;
 	public String teamName;
@@ -82,10 +82,10 @@ public class Team {
 
 		try {
 			//Checks if there is an Average Team in this League
-			if (managerID.equals("Average")) {
+			if (managerID.equals("0")) {
 				//Average Team Score will be dealt with when it builds the league.
-				//teamName = "Average";	
-				//goalkeeper.put("Average", null);
+				teamName = "Average";
+				managerName = "Average";
 				
 				System.out.println("Average Team Added...");
 			}

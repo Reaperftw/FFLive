@@ -16,7 +16,7 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 package com.FFLive;
 
@@ -35,6 +35,9 @@ import org.json.simple.JSONValue;
 //import org.jsoup.Jsoup;
 //import org.jsoup.nodes.Document;
 //import org.jsoup.select.Elements;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
 
 public class Player {
 
@@ -52,43 +55,57 @@ public class Player {
 	public String status = null;
 	public String news = null;
 	public String photo = null;
-	
+	public String GW = null;
+
 	private int timeout = 0;
 	//Status a = 100%, d = 75-25%, n=0%
 
 	public Player (String playerid) {
 		playerID= playerid;
 	}
+	
+	public Player (String playerid, String gameweek) {
+		playerID= playerid;
+		GW = gameweek;
+	}
 
 	public void getPlayer() {
 		try {
-			//Connects to the players info page
-			InputStream playerJson = new URL("http://fantasy.premierleague.com/web/api/elements/" + playerID + "/").openStream();
-			//Reads the data into a JSON object (via casting into a regular object)
-			Reader reader = new InputStreamReader(playerJson, "UTF-8");
-			JSONObject playerValues =  (JSONObject)JSONValue.parse(reader);
-			
-			//Adds Required Data
-			firstName = playerValues.get("first_name").toString();
-			lastName = playerValues.get("second_name").toString();
-			playerName = playerValues.get("web_name").toString();
-			playerTeam = playerValues.get("team_name").toString();
-			position = playerValues.get("type_name").toString();
-			/*
+			if(playerID.equals("-1")) {
+				//Average Team Player...
+				Document doc = Jsoup.connect("http://fantasy.premierleague.com/entry/1/event-history/" + GW + "/").get();
+				Elements averageScore = doc.select("div.ismUnit.ismSize2of5.ismLastUnit").select("div.ismSBSecondaryVal");
+				playerScore = Integer.parseInt(averageScore.text().replaceAll("\\D+", ""));
+				playerName = "Average";
+			}
+			else {
+				//Connects to the players info page
+				InputStream playerJson = new URL("http://fantasy.premierleague.com/web/api/elements/" + playerID + "/").openStream();
+				//Reads the data into a JSON object (via casting into a regular object)
+				Reader reader = new InputStreamReader(playerJson, "UTF-8");
+				JSONObject playerValues =  (JSONObject)JSONValue.parse(reader);
+
+				//Adds Required Data
+				firstName = playerValues.get("first_name").toString();
+				lastName = playerValues.get("second_name").toString();
+				playerName = playerValues.get("web_name").toString();
+				playerTeam = playerValues.get("team_name").toString();
+				position = playerValues.get("type_name").toString();
+				/*
 			JSONObject test = (JSONObject)JSONValue.parse(playerValues.get("fixture_history").toString());
 			String summary = test.get("summary").toString();
 			String all = test.get("all").toString();
-			*/
-			playerScore = Integer.parseInt(playerValues.get("event_total").toString());
-			gameweekBreakdown = playerValues.get("event_explain").toString();
-			//scoreBreakdown = playerValues.get("fixture_history").toString();
-			currentFixture = playerValues.get("current_fixture").toString();
-			nextFixture = playerValues.get("next_fixture").toString();
-			status = playerValues.get("status").toString();
-			news = playerValues.get("news").toString();
-			photo = playerValues.get("photo").toString();
-			
-			/*
+				 */
+				playerScore = Integer.parseInt(playerValues.get("event_total").toString());
+				gameweekBreakdown = playerValues.get("event_explain").toString();
+				//scoreBreakdown = playerValues.get("fixture_history").toString();
+				currentFixture = playerValues.get("current_fixture").toString();
+				nextFixture = playerValues.get("next_fixture").toString();
+				status = playerValues.get("status").toString();
+				news = playerValues.get("news").toString();
+				photo = playerValues.get("photo").toString();
+
+				/*
 			System.out.println(firstName);
 			System.out.println(lastName);
 			System.out.println(playerName);
@@ -103,6 +120,7 @@ public class Player {
 			System.out.println(status);
 			System.out.println(news);
 			System.out.println(photo);*/
+			}
 		}
 		catch(ConnectException c) {
 			if(timeoutCheck() > 3) {
@@ -128,7 +146,7 @@ public class Player {
 			System.out.println("In getPlayer: " + f);
 		}
 	}
-	
+
 	public int timeoutCheck() {
 		this.timeout++;
 		return this.timeout;

@@ -112,7 +112,7 @@ public class H2HLeague {
 						if (counter%8 == 3) {
 							//Team ID
 							if (el.text().equals("Average")) {
-								managerIDTemp="Average";
+								managerIDTemp="0";
 							}
 							else {
 								//ManagerIds in the link in the 3rd Column (of 6)
@@ -162,14 +162,14 @@ public class H2HLeague {
 					String awayID = el.select("td.ismAway").select("a").attr("href");
 
 					if(homeID.equals("")) {
-						homeID="Average";
+						homeID="0";
 					}
 					else {
 						homeID = homeID.split("/")[2];
 					}
 
 					if(awayID.equals("")) {
-						awayID="Average";
+						awayID="0";
 					}
 					else {
 						awayID = awayID.split("/")[2];
