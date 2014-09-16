@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.mysql.jdbc.MysqlDataTruncation;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException;
 
 public class MySQLConnection {
@@ -98,7 +99,7 @@ public class MySQLConnection {
 		}
 	}
 
-	public void addStatus(ArrayList<String> leagueIDs) {
+	public void addStatus(List<String> leagueIDs) {
 
 		System.out.print("Adding/Updating leagues...  ");
 		try {
@@ -128,7 +129,7 @@ public class MySQLConnection {
 			CTteamsGW.setInt(1, gw);
 			CTteamsGW.executeUpdate();
 
-			PreparedStatement CTPlayersGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS playersGW? (playerID INT NOT NULL UNIQUE, playerCount INT DEFAULT 1 NOT NULL, firstName VARCHAR(30), lastName VARCHAR(30), webName VARCHAR(40), score INT, gameweekBreakdown VARCHAR(150), breakdown VARCHAR(250), teamName VARCHAR(30), currentFixture VARCHAR(30), nextFixture VARCHAR(30), status VARCHAR(10), news VARCHAR(100), photo VARCHAR(30))");
+			PreparedStatement CTPlayersGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS playersGW? (playerID INT NOT NULL UNIQUE, playerCount INT DEFAULT 1 NOT NULL, firstName VARCHAR(40), lastName VARCHAR(40), webName VARCHAR(50), score INT, gameweekBreakdown VARCHAR(250), breakdown VARCHAR(250), teamName VARCHAR(40), currentFixture VARCHAR(40), nextFixture VARCHAR(40), status VARCHAR(10), news VARCHAR(250), photo VARCHAR(30))");
 			CTPlayersGW.setInt(1,gw);
 			CTPlayersGW.executeUpdate();
 
@@ -760,7 +761,7 @@ public class MySQLConnection {
 			CTteamsGW.setInt(1, gw);
 			CTteamsGW.executeUpdate();
 
-			PreparedStatement CTPlayersGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS playersGW? (playerID INT NOT NULL UNIQUE, playerCount INT DEFAULT 1 NOT NULL, firstName VARCHAR(30), lastName VARCHAR(30), webName VARCHAR(40), score INT, gameweekBreakdown VARCHAR(150), breakdown VARCHAR(250), teamName VARCHAR(30), currentFixture VARCHAR(30), nextFixture VARCHAR(30), status VARCHAR(10), news VARCHAR(100), photo VARCHAR(30))");
+			PreparedStatement CTPlayersGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS playersGW? (playerID INT NOT NULL UNIQUE, playerCount INT DEFAULT 1 NOT NULL, firstName VARCHAR(40), lastName VARCHAR(40), webName VARCHAR(50), score INT, gameweekBreakdown VARCHAR(250), breakdown VARCHAR(250), teamName VARCHAR(40), currentFixture VARCHAR(40), nextFixture VARCHAR(40), status VARCHAR(10), news VARCHAR(250), photo VARCHAR(30))");
 			CTPlayersGW.setInt(1,gw);
 			CTPlayersGW.executeUpdate();
 
@@ -828,7 +829,7 @@ public class MySQLConnection {
 			CTteamsGW.setInt(1, gw);
 			CTteamsGW.executeUpdate();
 
-			PreparedStatement CTPlayersGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS playersGW? (playerID INT NOT NULL UNIQUE, playerCount INT DEFAULT 1 NOT NULL, firstName VARCHAR(30), lastName VARCHAR(30), webName VARCHAR(40), score INT, gameweekBreakdown VARCHAR(150), breakdown VARCHAR(250), teamName VARCHAR(30), currentFixture VARCHAR(30), nextFixture VARCHAR(30), status VARCHAR(10), news VARCHAR(100), photo VARCHAR(30))");
+			PreparedStatement CTPlayersGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS playersGW? (playerID INT NOT NULL UNIQUE, playerCount INT DEFAULT 1 NOT NULL, firstName VARCHAR(40), lastName VARCHAR(40), webName VARCHAR(50), score INT, gameweekBreakdown VARCHAR(250), breakdown VARCHAR(250), teamName VARCHAR(40), currentFixture VARCHAR(40), nextFixture VARCHAR(40), status VARCHAR(10), news VARCHAR(250), photo VARCHAR(30))");
 			CTPlayersGW.setInt(1,gw);
 			CTPlayersGW.executeUpdate();
 
@@ -980,6 +981,7 @@ public class MySQLConnection {
 			//statement.executeQuery("SELECT playerID FROM playersGW" + gw);
 
 			while (playerList.next()) {
+				try {
 				Player player = new Player(Integer.toString(playerList.getInt("playerID")),gw);
 				player.getPlayer();
 				PreparedStatement UpPGw = conn.prepareStatement("UPDATE playersGW? set "
@@ -1025,6 +1027,13 @@ public class MySQLConnection {
 						+ "photo = '" + player.photo   + "' "
 						+ "where playerID = " + player.playerID);*/
 				UpPGw.close();
+				}
+				catch (MysqlDataTruncation g) {
+					System.err.println(g + " - while updating Players");
+				}
+				catch (Exception f) {
+					f.printStackTrace();
+				}
 			}
 
 		}

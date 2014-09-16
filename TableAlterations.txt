@@ -1,0 +1,3 @@
+EDITS TO PlayersGW# 
+(playerID INT NOT NULL UNIQUE, playerCount INT DEFAULT 1 NOT NULL, firstName VARCHAR(40), lastName VARCHAR(40), webName VARCHAR(50), score INT, gameweekBreakdown VARCHAR(250), breakdown VARCHAR(250), teamName VARCHAR(40), currentFixture VARCHAR(40), nextFixture VARCHAR(40), status VARCHAR(10), news VARCHAR(250), photo VARCHAR(30))
+Length of some of the VarChars
