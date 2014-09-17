@@ -1427,6 +1427,7 @@ public class MySQLConnection {
 	}
 
 	public void posDifferential (String GameWeek) {
+		System.out.print("Updating Positions...  ");
 		int gameweek = Integer.parseInt(GameWeek);
 		try {
 			PreparedStatement SPositions = conn.prepareStatement("SELECT managerID, leagueID, position, livePosition, livePoints, liveLP FROM leagues_teamsGW? ORDER BY leagueID");
@@ -1455,6 +1456,7 @@ public class MySQLConnection {
 		catch (Exception e) {
 			e.printStackTrace();
 		}
+		System.out.println("Done");
 	}
 
 	public void postUpdate (Leagues leagues) {
