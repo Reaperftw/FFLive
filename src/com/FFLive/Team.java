@@ -26,6 +26,7 @@ import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -180,14 +181,26 @@ public class Team {
 			System.out.println("-- Timeout Connecting, Retrying...");
 			getTeam();
 		}
+		catch (HttpStatusException i) {
+			if(timeoutCheck() > 4) {
+				System.err.println("Too Many Timeouts.. Skipping");
+			}
+			System.out.println("-- Timeout Connecting, Retrying...");
+			getTeam();
+		}
 		catch (UnknownHostException g) {
-			System.err.println("No Connection... Quitting");
+			System.err.println("No Connection... Skipping");
 		}
 		catch (NoRouteToHostException h) {
 			System.err.println("No Connection... Skipping");
 		}
 		catch(IOException f) {
 			System.err.println("-- In addPlayers: " + f);
+			if(timeoutCheck() > 2) {
+				System.err.println("Too Many Timeouts.. Skipping");
+			}
+			System.out.println("-- Retrying...");
+			getTeam();
 		}
 		
 	}

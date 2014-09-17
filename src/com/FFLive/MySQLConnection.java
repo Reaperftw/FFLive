@@ -54,7 +54,7 @@ public class MySQLConnection {
 			statement.executeUpdate("USE " + database);
 			statement.executeUpdate("CREATE TABLE IF NOT EXISTS leagues (ID INT NOT NULL UNIQUE, name VARCHAR(30) NOT NULL, type VARCHAR(10) NOT NULL)");
 			statement.executeUpdate("CREATE TABLE IF NOT EXISTS status (LeagueID INT NOT NULL, Gameweek INT NOT NULL, starts VARCHAR(20), kickOff VARCHAR(20), started VARCHAR(2) DEFAULT 'N', ends VARCHAR(20) , ended VARCHAR(2) DEFAULT 'N', teamsStored VARCHAR(2) DEFAULT 'N', postGwUpdate VARCHAR(2) DEFAULT 'N', UNIQUE (leagueID, Gameweek))");
-			statement.executeUpdate("CREATE TABLE IF NOT EXISTS webFront (page VARCHAR(10) UNIQUE, status VARCHAR(30), currGameweek INT)");
+			statement.executeUpdate("CREATE TABLE IF NOT EXISTS webFront (page VARCHAR(50) UNIQUE, status VARCHAR(300), currGameweek INT)");
 			statement.executeUpdate("INSERT INTO webFront (page, status) values ('index', 'Loading...')  ON DUPLICATE KEY UPDATE status = 'loading'");
 			System.out.println("Database loaded!");
 			statement.close();
@@ -121,6 +121,8 @@ public class MySQLConnection {
 
 			//CREATE all the required Gameweek Leagues...
 
+			createGWTables(gw);
+			/*
 			PreparedStatement CTleagueTeamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS leagues_teamsGW? (leagueID INT NOT NULL, managerID INT NOT NULL, lp INT DEFAULT 0, position INT, wins INT DEFAULT 0, loss INT DEFAULT 0, draw INT DEFAULT 0, points INT DEFAULT 0, fixture VARCHAR(2), livePoints INT, liveLP INT DEFAULT 0, liveWin INT DEFAULT 0, liveLoss INT DEFAULT 0, liveDraw INT DEFAULT 0, livePosition INT, posDifferential VARCHAR(10) DEFAULT '-', UNIQUE (leagueID, managerID))");
 			CTleagueTeamsGW.setInt(1, gw);
 			CTleagueTeamsGW.executeUpdate();
@@ -129,14 +131,15 @@ public class MySQLConnection {
 			CTteamsGW.setInt(1, gw);
 			CTteamsGW.executeUpdate();
 
-			PreparedStatement CTPlayersGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS playersGW? (playerID INT NOT NULL UNIQUE, playerCount INT DEFAULT 1 NOT NULL, firstName VARCHAR(40), lastName VARCHAR(40), webName VARCHAR(50), score INT, gameweekBreakdown VARCHAR(250), breakdown VARCHAR(250), teamName VARCHAR(40), currentFixture VARCHAR(40), nextFixture VARCHAR(40), status VARCHAR(10), news VARCHAR(250), photo VARCHAR(30))");
+			PreparedStatement CTPlayersGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS playersGW? (playerID INT NOT NULL UNIQUE, playerCount INT DEFAULT 1 NOT NULL, firstName VARCHAR(100), lastName VARCHAR(100), webName VARCHAR(100), score INT, gameweekBreakdown VARCHAR(65500), breakdown VARCHAR(65500), teamName VARCHAR(40), currentFixture VARCHAR(40), nextFixture VARCHAR(40), status VARCHAR(10), news VARCHAR(65500), photo VARCHAR(30))");
 			CTPlayersGW.setInt(1,gw);
 			CTPlayersGW.executeUpdate();
 
 			PreparedStatement CTH2HFixture = conn.prepareStatement("CREATE TABLE IF NOT EXISTS H2HGW? (leagueID INT NOT NULL, home VARCHAR(30), away VARCHAR(30), fixtureNo INT, UNIQUE(leagueID, home, away))");
 			CTH2HFixture.setInt(1,gw);
 			CTH2HFixture.executeUpdate();
-
+			*/
+			
 			for (String leagueID : leagueIDs) {
 				PreparedStatement preparedStmt = conn.prepareStatement("INSERT INTO status (LeagueID, Gameweek, starts, kickOff, ends) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE starts = ?, kickOff = ?, ends = ?");
 				preparedStmt.setInt(1 , Integer.parseInt(leagueID));
@@ -157,6 +160,9 @@ public class MySQLConnection {
 				int prevGW = gw -1;
 				Fixtures prevFixture = new Fixtures(prevGW);
 				prevFixture.loadFixtures();
+				
+				createGWTables(prevGW);
+				/*
 				//PreparedStatement CTleagueTeamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS leagues_teamsGW? (leagueID INT NOT NULL, managerID INT NOT NULL, lp INT DEFAULT 0, position INT, wins INT DEFAULT 0, loss INT DEFAULT 0, draw INT DEFAULT 0, points INT DEFAULT 0, fixture VARCHAR(2), livePoints INT, liveLP INT DEFAULT 0, liveWin INT DEFAULT 0, liveLoss INT DEFAULT 0, liveDraw INT DEFAULT 0, livePosition INT, posDifferential VARCHAR(10) DEFAULT '-', UNIQUE (leagueID, managerID))");
 				CTleagueTeamsGW.setInt(1, prevGW);
 				CTleagueTeamsGW.executeUpdate();
@@ -172,7 +178,8 @@ public class MySQLConnection {
 				//PreparedStatement CTH2HFixture = conn.prepareStatement("CREATE TABLE IF NOT EXISTS H2HGW? (leagueID INT NOT NULL, home VARCHAR(30), away VARCHAR(30), fixtureNo INT, UNIQUE(leagueID, home, away))");
 				CTH2HFixture.setInt(1,prevGW);
 				CTH2HFixture.executeUpdate();
-
+				*/
+				
 				for (String leagueID : leagueIDs) {
 					PreparedStatement preparedStmt = conn.prepareStatement("INSERT INTO status (LeagueID, Gameweek, starts, kickOff, ends) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE starts = ?, kickOff = ?, ends = ?");
 					preparedStmt.setInt(1 , Integer.parseInt(leagueID));
@@ -190,10 +197,7 @@ public class MySQLConnection {
 
 
 			}
-			CTleagueTeamsGW.close();
-			CTteamsGW.close();
-			CTPlayersGW.close();
-			CTH2HFixture.close();
+			
 
 			System.out.println("Ready!");
 
@@ -575,6 +579,19 @@ public class MySQLConnection {
 		}
 	}
 
+	public void clearPostUpdate (String gw) {
+		try {
+			PreparedStatement preparedStmt = conn.prepareStatement("UPDATE status set postGwUpdate='N' where Gameweek = ?");
+			preparedStmt.setInt(1 , Integer.parseInt(gw));
+			preparedStmt.executeUpdate();
+			preparedStmt.close();
+		}
+		catch (SQLException sql) {
+			System.err.println("Status Table Update Failed");
+			System.err.println(sql);
+		}
+	}
+
 	public void teamsUpdateStatus (int leagueID, String gw) {
 		try {
 			PreparedStatement preparedStmt = conn.prepareStatement("UPDATE status set teamsStored='Y' where LeagueID = ? AND Gameweek = ?");
@@ -748,11 +765,8 @@ public class MySQLConnection {
 		}
 	}
 
-	public void preStore (ClassicLeague league) {
+	public void createGWTables (int gw) {
 		try {
-			System.out.print("Storing Pre-Gameweek Data for League '" + league.leagueName + "' to DB...  ");
-			int gw = Integer.parseInt(league.gameweek) + 1;
-
 			PreparedStatement CTleagueTeamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS leagues_teamsGW? (leagueID INT NOT NULL, managerID INT NOT NULL, lp INT DEFAULT 0, position INT, wins INT DEFAULT 0, loss INT DEFAULT 0, draw INT DEFAULT 0, points INT DEFAULT 0, fixture VARCHAR(2), livePoints INT, liveLP INT DEFAULT 0, liveWin INT DEFAULT 0, liveLoss INT DEFAULT 0, liveDraw INT DEFAULT 0, livePosition INT, posDifferential VARCHAR(10) DEFAULT '-', UNIQUE (leagueID, managerID))");
 			CTleagueTeamsGW.setInt(1, gw);
 			CTleagueTeamsGW.executeUpdate();
@@ -761,14 +775,49 @@ public class MySQLConnection {
 			CTteamsGW.setInt(1, gw);
 			CTteamsGW.executeUpdate();
 
-			PreparedStatement CTPlayersGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS playersGW? (playerID INT NOT NULL UNIQUE, playerCount INT DEFAULT 1 NOT NULL, firstName VARCHAR(40), lastName VARCHAR(40), webName VARCHAR(50), score INT, gameweekBreakdown VARCHAR(250), breakdown VARCHAR(250), teamName VARCHAR(40), currentFixture VARCHAR(40), nextFixture VARCHAR(40), status VARCHAR(10), news VARCHAR(250), photo VARCHAR(30))");
+			PreparedStatement CTPlayersGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS playersGW? (playerID INT NOT NULL UNIQUE, playerCount INT DEFAULT 1 NOT NULL, firstName VARCHAR(100), lastName VARCHAR(100), webName VARCHAR(100), score INT, gameweekBreakdown VARCHAR(20000), breakdown VARCHAR(20000), teamName VARCHAR(40), currentFixture VARCHAR(40), nextFixture VARCHAR(40), status VARCHAR(10), news VARCHAR(20000), photo VARCHAR(30))");
 			CTPlayersGW.setInt(1,gw);
 			CTPlayersGW.executeUpdate();
 
 			PreparedStatement CTH2HFixture = conn.prepareStatement("CREATE TABLE IF NOT EXISTS H2HGW? (leagueID INT NOT NULL, home VARCHAR(30), away VARCHAR(30), fixtureNo INT, UNIQUE(leagueID, home, away))");
 			CTH2HFixture.setInt(1,gw);
 			CTH2HFixture.executeUpdate();
+			
+			CTleagueTeamsGW.close();
+			CTteamsGW.close();
+			CTPlayersGW.close();
+			CTH2HFixture.close();
+		}
+		catch (Exception e) {
+			//TODO Error Handle
+			e.printStackTrace();
+			System.exit(1070);
+		}
+	}
 
+	public void preStore (ClassicLeague league) {
+		try {
+			System.out.print("Storing Pre-Gameweek Data for League '" + league.leagueName + "' to DB...  ");
+			int gw = Integer.parseInt(league.gameweek) + 1;
+			
+			createGWTables(gw);
+			/*
+			PreparedStatement CTleagueTeamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS leagues_teamsGW? (leagueID INT NOT NULL, managerID INT NOT NULL, lp INT DEFAULT 0, position INT, wins INT DEFAULT 0, loss INT DEFAULT 0, draw INT DEFAULT 0, points INT DEFAULT 0, fixture VARCHAR(2), livePoints INT, liveLP INT DEFAULT 0, liveWin INT DEFAULT 0, liveLoss INT DEFAULT 0, liveDraw INT DEFAULT 0, livePosition INT, posDifferential VARCHAR(10) DEFAULT '-', UNIQUE (leagueID, managerID))");
+			CTleagueTeamsGW.setInt(1, gw);
+			CTleagueTeamsGW.executeUpdate();
+
+			PreparedStatement CTteamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS teamsGW? (managerID INT NOT NULL UNIQUE, teamName VARCHAR(25), managerName VARCHAR(120), op INT DEFAULT 0, gw INT DEFAULT 0, liveOP INT DEFAULT 0, GkID INT DEFAULT 0, DefID1 INT DEFAULT 0, DefID2 INT DEFAULT 0, DefID3 INT DEFAULT 0, DefID4 INT DEFAULT 0, DefID5 INT DEFAULT 0, MidID1 INT DEFAULT 0, MidID2 INT DEFAULT 0, MidID3 INT DEFAULT 0, MidID4 INT DEFAULT 0, MidID5 INT DEFAULT 0, ForID1 INT DEFAULT 0, ForID2 INT DEFAULT 0, ForID3 INT DEFAULT 0, BenchID1 INT DEFAULT 0, BenchID2 INT DEFAULT 0, BenchID3 INT DEFAULT 0, BenchID4 INT DEFAULT 0, captainID INT DEFAULT 0, viceCaptainID INT DEFAULT 0)");
+			CTteamsGW.setInt(1, gw);
+			CTteamsGW.executeUpdate();
+
+			PreparedStatement CTPlayersGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS playersGW? (playerID INT NOT NULL UNIQUE, playerCount INT DEFAULT 1 NOT NULL, firstName VARCHAR(100), lastName VARCHAR(100), webName VARCHAR(100), score INT, gameweekBreakdown VARCHAR(65500), breakdown VARCHAR(65500), teamName VARCHAR(40), currentFixture VARCHAR(40), nextFixture VARCHAR(40), status VARCHAR(10), news VARCHAR(65500), photo VARCHAR(30)");
+			CTPlayersGW.setInt(1,gw);
+			CTPlayersGW.executeUpdate();
+
+			PreparedStatement CTH2HFixture = conn.prepareStatement("CREATE TABLE IF NOT EXISTS H2HGW? (leagueID INT NOT NULL, home VARCHAR(30), away VARCHAR(30), fixtureNo INT, UNIQUE(leagueID, home, away))");
+			CTH2HFixture.setInt(1,gw);
+			CTH2HFixture.executeUpdate();
+			*/
 			PreparedStatement leaguesInsert = conn.prepareStatement("INSERT INTO leagues values (?, ?, 'Classic') ON DUPLICATE KEY UPDATE name = ?, type = 'Classic'");
 			leaguesInsert.setInt(1, league.leagueID);
 			leaguesInsert.setString(2, league.leagueName);
@@ -821,6 +870,8 @@ public class MySQLConnection {
 			System.out.print("Storing Pre-Gameweek Data for League '" + league.leagueName + "' to DB...  ");
 			int gw = Integer.parseInt(league.gameweek) + 1;
 
+			createGWTables(gw);
+			/*
 			PreparedStatement CTleagueTeamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS leagues_teamsGW? (leagueID INT NOT NULL, managerID INT NOT NULL, lp INT DEFAULT 0, position INT, wins INT DEFAULT 0, loss INT DEFAULT 0, draw INT DEFAULT 0, points INT DEFAULT 0, fixture VARCHAR(2), livePoints INT, liveLP INT DEFAULT 0, liveWin INT DEFAULT 0, liveLoss INT DEFAULT 0, liveDraw INT DEFAULT 0, livePosition INT, posDifferential VARCHAR(10) DEFAULT '-', UNIQUE (leagueID, managerID))");
 			CTleagueTeamsGW.setInt(1, gw);
 			CTleagueTeamsGW.executeUpdate();
@@ -829,14 +880,14 @@ public class MySQLConnection {
 			CTteamsGW.setInt(1, gw);
 			CTteamsGW.executeUpdate();
 
-			PreparedStatement CTPlayersGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS playersGW? (playerID INT NOT NULL UNIQUE, playerCount INT DEFAULT 1 NOT NULL, firstName VARCHAR(40), lastName VARCHAR(40), webName VARCHAR(50), score INT, gameweekBreakdown VARCHAR(250), breakdown VARCHAR(250), teamName VARCHAR(40), currentFixture VARCHAR(40), nextFixture VARCHAR(40), status VARCHAR(10), news VARCHAR(250), photo VARCHAR(30))");
+			PreparedStatement CTPlayersGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS playersGW? (playerID INT NOT NULL UNIQUE, playerCount INT DEFAULT 1 NOT NULL, firstName VARCHAR(100), lastName VARCHAR(100), webName VARCHAR(100), score INT, gameweekBreakdown VARCHAR(65500), breakdown VARCHAR(65500), teamName VARCHAR(40), currentFixture VARCHAR(40), nextFixture VARCHAR(40), status VARCHAR(10), news VARCHAR(65500), photo VARCHAR(30))");
 			CTPlayersGW.setInt(1,gw);
 			CTPlayersGW.executeUpdate();
 
 			PreparedStatement CTH2HFixture = conn.prepareStatement("CREATE TABLE IF NOT EXISTS H2HGW? (leagueID INT NOT NULL, home VARCHAR(30), away VARCHAR(30), fixtureNo INT, UNIQUE(leagueID, home, away))");
 			CTH2HFixture.setInt(1,gw);
 			CTH2HFixture.executeUpdate();
-
+			*/
 
 			PreparedStatement leaguesInsertH2H = conn.prepareStatement("INSERT INTO leagues values (?, ?, 'H2H') ON DUPLICATE KEY UPDATE name = ?, type = 'H2H'");
 			leaguesInsertH2H.setInt(1, league.leagueID);
@@ -982,38 +1033,38 @@ public class MySQLConnection {
 
 			while (playerList.next()) {
 				try {
-				Player player = new Player(Integer.toString(playerList.getInt("playerID")),gw);
-				player.getPlayer();
-				PreparedStatement UpPGw = conn.prepareStatement("UPDATE playersGW? set "
-						+ "firstName =?, "
-						+ "lastName =?, "
-						+ "webName = ?, "
-						+ "score = ?, "
-						+ "gameweekBreakdown = ?,"
-						//+ "breakdown = ?, "
-						+ "teamName = ?, "
-						+ "currentFixture = ?, "
-						+ "nextFixture = ?, "
-						+ "status = ?, "
-						+ "news = ?, "
-						+ "photo = ? "
-						+ "WHERE playerID = ?");
-				UpPGw.setInt(1, Integer.parseInt(gw));
-				UpPGw.setString(2, player.firstName);
-				UpPGw.setString(3, player.lastName);
-				UpPGw.setString(4, player.playerName);
-				UpPGw.setInt(5, player.playerScore);
-				UpPGw.setString(6, player.gameweekBreakdown);
-				//UpPGw.setString(7, player.scoreBreakdown);
-				UpPGw.setString(7, player.playerTeam);
-				UpPGw.setString(8, player.currentFixture);
-				UpPGw.setString(9, player.nextFixture);
-				UpPGw.setString(10, player.status);
-				UpPGw.setString(11, player.news);
-				UpPGw.setString(12, player.photo);
-				UpPGw.setInt(13, Integer.parseInt(player.playerID));
-				UpPGw.executeUpdate();
-				/*updateSt.executeUpdate("UPDATE playersGW" + gw + " set "
+					Player player = new Player(Integer.toString(playerList.getInt("playerID")),gw);
+					player.getPlayer();
+					PreparedStatement UpPGw = conn.prepareStatement("UPDATE playersGW? set "
+							+ "firstName =?, "
+							+ "lastName =?, "
+							+ "webName = ?, "
+							+ "score = ?, "
+							+ "gameweekBreakdown = ?,"
+							//+ "breakdown = ?, "
+							+ "teamName = ?, "
+							+ "currentFixture = ?, "
+							+ "nextFixture = ?, "
+							+ "status = ?, "
+							+ "news = ?, "
+							+ "photo = ? "
+							+ "WHERE playerID = ?");
+					UpPGw.setInt(1, Integer.parseInt(gw));
+					UpPGw.setString(2, player.firstName);
+					UpPGw.setString(3, player.lastName);
+					UpPGw.setString(4, player.playerName);
+					UpPGw.setInt(5, player.playerScore);
+					UpPGw.setString(6, player.gameweekBreakdown);
+					//UpPGw.setString(7, player.scoreBreakdown);
+					UpPGw.setString(7, player.playerTeam);
+					UpPGw.setString(8, player.currentFixture);
+					UpPGw.setString(9, player.nextFixture);
+					UpPGw.setString(10, player.status);
+					UpPGw.setString(11, player.news);
+					UpPGw.setString(12, player.photo);
+					UpPGw.setInt(13, Integer.parseInt(player.playerID));
+					UpPGw.executeUpdate();
+					/*updateSt.executeUpdate("UPDATE playersGW" + gw + " set "
 						+ "firstName = '" + player.firstName + "', "
 						+ "lastName = '" + player.lastName  + "', "
 						+ "webName = '" + player.playerName  + "', "
@@ -1026,7 +1077,7 @@ public class MySQLConnection {
 						+ "news = '" + player.news  + "', "
 						+ "photo = '" + player.photo   + "' "
 						+ "where playerID = " + player.playerID);*/
-				UpPGw.close();
+					UpPGw.close();
 				}
 				catch (MysqlDataTruncation g) {
 					System.err.println(g + " - while updating Players");
@@ -1295,7 +1346,7 @@ public class MySQLConnection {
 					STeams.setInt(2, leagueID);
 					ResultSet allTeams = STeams.executeQuery();
 					int position = 0;
-					int prevLP = -1;
+					int prevLP = -10000;
 					int skip = 1;
 					while(allTeams.next()) {
 
@@ -1330,7 +1381,7 @@ public class MySQLConnection {
 					STeams.setInt(1, gameweek);
 					STeams.setInt(2, leagueID);
 					ResultSet allTeams = STeams.executeQuery();
-					int prevLP = -1;
+					int prevLP = -10000;
 					int prevPoints = -1;
 					int position = 0;
 					int skip = 1;
@@ -1375,6 +1426,37 @@ public class MySQLConnection {
 		System.out.println("Done!");
 	}
 
+	public void posDifferential (String GameWeek) {
+		int gameweek = Integer.parseInt(GameWeek);
+		try {
+			PreparedStatement SPositions = conn.prepareStatement("SELECT managerID, leagueID, position, livePosition, livePoints, liveLP FROM leagues_teamsGW? ORDER BY leagueID");
+			SPositions.setInt(1, gameweek);
+			ResultSet RPositions = SPositions.executeQuery();
+
+			while(RPositions.next()) {
+
+				String posDiff = "-";
+				if (RPositions.getInt("livePosition") > RPositions.getInt("position")) {
+					posDiff = "Down";
+				}
+				else if (RPositions.getInt("livePosition") < RPositions.getInt("position")) {
+					posDiff = "Up";
+				}
+				PreparedStatement UTeam = conn.prepareStatement("UPDATE leagues_teamsGW? set posDifferential = ? WHERE managerID = ? AND leagueID = ?");
+				UTeam.setInt(1, gameweek);
+				UTeam.setString(2, posDiff);
+				UTeam.setInt(3, RPositions.getInt("managerID"));
+				UTeam.setInt(4, RPositions.getInt("leagueID"));
+				UTeam.executeUpdate();
+				UTeam.close();
+			}
+			SPositions.close();
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	public void postUpdate (Leagues leagues) {
 		Set<String> gameweeks = new HashSet<String>();
 		for (ClassicLeague CL: leagues.classicLeague) {
@@ -1401,6 +1483,7 @@ public class MySQLConnection {
 		for(String temp: gameweeks) {
 			generatePlayerList(temp);
 			updatePlayers(temp);
+			posDifferential(temp);
 		}
 	}
 

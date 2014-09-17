@@ -164,6 +164,17 @@ public class Main {
 						System.out.println("Will generate Player List and Update for Gameweek " + parts[1]);
 						dbAccess.generatePlayerList(parts[1]);
 						dbAccess.updatePlayers(parts[1]);
+						dbAccess.posDifferential(parts[1]);
+					}
+				}
+				if (parts[0].equals("post")) {
+					if (parts.length!=2) {
+						System.out.println("Invalid arguments given for " + test);
+					}
+					else {
+						System.out.println("Marking all leagues for Post Update for Gameweek " + parts[1]);
+						dbAccess.clearPostUpdate(parts[1].trim());
+						System.out.println("Restart without arguments...");
 					}
 				}
 				else {
