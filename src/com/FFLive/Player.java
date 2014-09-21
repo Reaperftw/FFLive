@@ -75,7 +75,13 @@ public class Player {
 				//Average Team Player...
 				Document doc = Jsoup.connect("http://fantasy.premierleague.com/entry/1/event-history/" + GW + "/").get();
 				Elements averageScore = doc.select("div.ismUnit.ismSize2of5.ismLastUnit").select("div.ismSBSecondaryVal");
-				playerScore = Integer.parseInt(averageScore.text().replaceAll("\\D+", ""));
+				if (averageScore.isEmpty()) {
+					playerScore = 0;
+				}
+				else {
+					playerScore = Integer.parseInt(averageScore.text().replaceAll("\\D+", ""));
+				}
+				//TODO Number Format Exception?
 				playerName = "Average";
 			}
 			else {

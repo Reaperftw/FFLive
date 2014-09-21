@@ -1164,7 +1164,7 @@ public class MySQLConnection {
 					}
 
 					SAvPlayer.close();
-					PreparedStatement UAvScore = conn.prepareStatement("UPDATE teamsGW? set gw = ? WHERE managerID = ?");
+					PreparedStatement UAvScore = conn.prepareStatement("UPDATE teamsGW? set gw = ? WHERE managerID = 0");
 					UAvScore.setInt(1, gameweek);
 					UAvScore.setInt(2, gwScore);
 					UAvScore.executeUpdate();

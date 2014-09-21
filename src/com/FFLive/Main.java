@@ -318,10 +318,11 @@ public class Main {
 
 					dbAccess.setWebFront("index", "Live Updating");
 					System.out.print("Starting Live Update for all Selected Leagues...  ");
-
+					dbAccess.generatePlayerList(gameweek);
+					
 					System.out.println("Live Running Until " + endOfDay.getTime() + ", or End program by creating stop.txt in this directory... ");
+					
 					while (Calendar.getInstance().before(endOfDay)) {
-						dbAccess.generatePlayerList(gameweek);
 						dbAccess.updatePlayers(gameweek);
 						dbAccess.updateScores(gameweek);
 						try {
