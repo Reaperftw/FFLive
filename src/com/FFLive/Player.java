@@ -91,6 +91,7 @@ public class Player {
 				Reader reader = new InputStreamReader(playerJson, "UTF-8");
 				JSONObject playerValues =  (JSONObject)JSONValue.parse(reader);
 
+				//TODO Debug TExt to be added to Players
 				//TODO Check if there are values overlength
 				//Max Length Ref playerCount INT DEFAULT 1 NOT NULL, firstName VARCHAR(40), lastName VARCHAR(40),
 				//webName VARCHAR(50), score INT, gameweekBreakdown VARCHAR(250), breakdown VARCHAR(250), 

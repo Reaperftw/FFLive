@@ -63,7 +63,7 @@ public class H2HLeague {
 
 
 	public void loadH2HLeague() {
-		System.out.println("Loading Head-to-Head League: " + leagueID + "...");
+		System.out.print("Loading Head-to-Head League: " + leagueID + "...   ");
 		try {
 			String URL = ("http://fantasy.premierleague.com/my-leagues/" + leagueID + "/standings/");
 			Document leaguePage = Jsoup.connect(URL).get();
@@ -73,6 +73,7 @@ public class H2HLeague {
 			Elements leagueTable = leaguePage.select("table.ismTable.ismH2HStandingsTable");
 			//Checks for H2H League
 			if (leagueTable.isEmpty()) {
+				System.err.println("");
 				System.err.println("This League either contains no teams or the season has not yet begun!");
 
 			}
@@ -85,13 +86,15 @@ public class H2HLeague {
 				Elements lName = leaguePage.getElementsByClass("ismTabHeading");
 
 				leagueName = lName.text();
-				System.out.println("Loaded League: " + lName.text());
+				//TODO Debug Text
+				//System.out.println("Loaded League: " + lName.text());
 
 				//Works Out Gameweek
 				gameweek = managerID.attr("href").split("/")[4];
 
-				System.out.println("The Current Gameweek is " + gameweek);
-				System.out.print("Loading Managers...  ");
+				//TODO Debug Text
+				//System.out.println("The Current Gameweek is " + gameweek);
+				//System.out.print("Loading Managers...  ");
 
 				//To Save Reloading the Page later, passes forward the league score and ManagerIDs
 
@@ -148,7 +151,8 @@ public class H2HLeague {
 					addH2HManager(entry.getKey(), gameweek, entry.getValue());
 				}
 
-				System.out.print("Managers Loaded, Loading Fixtures...  ");
+				//TODO Debug Text?
+				System.out.print("Loading Fixtures...  ");
 
 				Element fixtureTable = leaguePage.select("table.ismTable.ismH2HFixTable").first();
 				Elements fixtures = fixtureTable.select("tr");
@@ -176,7 +180,8 @@ public class H2HLeague {
 					}
 					fixtureMap.put(homeID, awayID);
 				}
-				System.out.println("Done!");
+				//TODO Debug Text
+				//System.out.println("Done!");
 
 			}
 		}
@@ -209,20 +214,19 @@ public class H2HLeague {
 	public void addH2HManager(String manID, String GW, String[] scores) {
 		//Adds a map of managerIDs to teams (which store the managerID anyway, but ID needed later for sorting)Max teams maybe expanded
 		//Adds the managers using addManager Method, passing on the League Score Also
-		if (managerMap.size() < maxH2HManagers) {
-			//Passes all league details within the Team constructor
+		//Passes all league details within the Team constructor
 			managerMap.put(manID, new Team(manID, GW, scores[4], scores[1], scores[2], scores[3], scores[5], scores[0]));
-		} 
-		else {
-			System.err.println("Maximum managers reached.");
-		}
+		
 	}
 
 	public void loadTeams() {
 		//Runs through all the entries to load the Teams
+		int n = 1;
 		for (Entry<String,Team> entry: managerMap.entrySet()) {
+			System.out.print("Loading Teams for '" + leagueName + "'... Team " + n++ + "/" + managerMap.size() + "\r");
 			entry.getValue().getTeam();
 		}
+		System.out.println("");
 	}
 
 	/*

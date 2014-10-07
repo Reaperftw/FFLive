@@ -55,7 +55,13 @@ public class Fixtures {
 		//Assuming this page shows the current gameweek
 		try {
 			//Loading Fixtures Page
-			System.out.print("Checking Fixtures and Start Times...  ");
+			//TODO Add some debugging here for connections etc.
+			if(loadGameweek.equals("")) {
+				System.out.print("Checking Gameweek, Fixtures and Start Times...  ");
+			}
+			else {
+				System.out.print("Checking Fixtures and Start Times for GW: " + loadGameweek + "...  ");
+			}
 			String URL = ("http://fantasy.premierleague.com/fixtures/" + loadGameweek);
 			Document fixtures = Jsoup.connect(URL).get();
 			Elements fixtureTable = fixtures.select("table.ismFixtureTable");
@@ -70,6 +76,7 @@ public class Fixtures {
 			kickOff = individualFixtures.first().select("td").first().text().trim();
 			endTime = individualFixtures.last().select("td").first().text().trim();
 			//Add Two Hours After final kickoff to make sure match has finished.
+			//Not needed anymore, check happens elsewhere but correct time also needed.
 			//endTime.add(Calendar.HOUR_OF_DAY, 2);
 			
 			
@@ -90,10 +97,12 @@ public class Fixtures {
 			loadFixtures();
 		}
 		catch (UnknownHostException g) {
-			System.err.println("No Connection... Skipping");
+			System.err.println("No Connection... Exiting");
+			System.exit(950);
 		}
 		catch (NoRouteToHostException h) {
-			System.err.println("No Connection... Skipping");
+			System.err.println("No Connection... Exiting");
+			System.exit(951);
 		}
 		catch (IOException f) {
 			System.err.println("In Fixtures: " + f);

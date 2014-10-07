@@ -55,6 +55,8 @@ public class Team {
 	public int opScore = 0;
 	public int lpScore;
 	public int h2hScore = 0;
+	public int transfers = 0;
+	public int deductions = 0;
 	public int win = 0;
 	public int loss = 0;
 	public int draw = 0;
@@ -87,19 +89,34 @@ public class Team {
 				//Average Team Score will be dealt with when it builds the league.
 				teamName = "Average";
 				managerName = "Average";
-				
-				System.out.println("Average Team Added...");
+				//TODO DEbug text
+				//System.out.println("Average Team Added...");
 			}
 			else {
-				System.out.println("Connecting to Team " + managerID);
+				//TODO Debug Text
+				//System.out.println("Connecting to Team " + managerID);
 				//The FF Team in question's webpage
 				Document doc = Jsoup.connect("http://fantasy.premierleague.com/entry/" + managerID + "/event-history/" + GW + "/").get();
 
 				teamName = doc.getElementsByClass("ismSection3").text();
 
 				managerName = doc.getElementsByClass("ismSection2").text();
-
-				System.out.print("Getting Team Data For " + teamName + "...  ");
+				
+				//Checks for transfers and deductions
+				String[] transfer = doc.select("dl.ismDefList.ismSBDefList").text().split("Transfers")[1].split("\\(");
+				if(transfer.length == 1) {
+					transfers = Integer.parseInt(transfer[0].trim());
+				}
+				else if (transfer.length == 2) {
+					transfers = Integer.parseInt(transfer[0].trim());
+					deductions = Integer.parseInt(transfer[1].replace("pts)", "").trim());
+				}
+				else {
+					//TODO Debug
+					System.out.println("Error in Deductions and Transfers!");
+				}
+				//TODO Debu Text
+				//System.out.print("Getting Team Data For " + teamName + "...  ");
 
 				//Overall Points Score and Gameweek Score, Saved for Previous Week Needs
 				opScore = Integer.parseInt(doc.getElementsByClass("ismRHSDefList").text().split(" ")[2].replaceAll("\\D+",""));
@@ -163,43 +180,48 @@ public class Team {
 						}
 					}
 				}
-
-				System.out.println("Done!");
+				//TODO
+				//System.out.println("Done!");
 			}
 		}
 		catch (ConnectException c) {
 			if(timeoutCheck() > 4) {
-				System.err.println("Too Many Timeouts.. Skipping");
+				System.err.println("Too Many Timeouts Connecting to ID: " + managerID + ".. Skipping");
 			}
-			System.out.println("-- Timeout Connecting, Retrying...");
+			//TODO
+			//System.out.println("-- Timeout Connecting, Retrying...");
 			getTeam();
 		}
 		catch(SocketTimeoutException e) {
 			if(timeoutCheck() > 4) {
-				System.err.println("Too Many Timeouts.. Skipping");
+				System.err.println("Too Many Timeouts Connecting to ID: " + managerID + ".. Skipping");
 			}
-			System.out.println("-- Timeout Connecting, Retrying...");
+			
+			//TODO
+			//System.out.println("-- Timeout Connecting, Retrying...");
 			getTeam();
 		}
 		catch (HttpStatusException i) {
 			if(timeoutCheck() > 4) {
-				System.err.println("Too Many Timeouts.. Skipping");
+				System.err.println("Too Many Timeouts Connecting to ID: " + managerID + ".. Skipping");
 			}
-			System.out.println("-- Timeout Connecting, Retrying...");
+			//TODO
+			//System.out.println("-- Timeout Connecting, Retrying...");
 			getTeam();
 		}
 		catch (UnknownHostException g) {
-			System.err.println("No Connection... Skipping");
+			System.err.println("No Connection Connecting to ID: " + managerID + ".. Skipping");
 		}
 		catch (NoRouteToHostException h) {
-			System.err.println("No Connection... Skipping");
+			System.err.println("No Connection Connecting to ID: " + managerID + ".. Skipping");
 		}
 		catch(IOException f) {
 			System.err.println("-- In addPlayers: " + f);
 			if(timeoutCheck() > 2) {
-				System.err.println("Too Many Timeouts.. Skipping");
+				System.err.println("Problem Connecting to ID: " + managerID + ".. Skipping");
 			}
-			System.out.println("-- Retrying...");
+			//TODO
+			//System.out.println("-- Retrying...");
 			getTeam();
 		}
 		

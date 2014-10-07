@@ -48,7 +48,8 @@ public class ClassicLeague {
 	}
 
 	public void loadLeague() {
-		System.out.println("Loading Classic League: " + leagueID + "...");
+		//TODO Debug Text?
+		System.out.print("Loading Classic League: " + leagueID + "...   ");
 		try {
 			String URL = ("http://fantasy.premierleague.com/my-leagues/" + leagueID + "/standings/");
 			Document leaguePage = Jsoup.connect(URL).get();
@@ -58,19 +59,23 @@ public class ClassicLeague {
 			Elements leagueTable = leaguePage.select("table.ismTable.ismStandingsTable");
 			//Checks for Classic League
 			if (leagueTable.isEmpty()) {
+				System.err.println("");
 				System.err.println("This League is empty so either contains no teams or the season has not yet begun!");
 			}
 			else {
 
 				//Gets League Name
 				leagueName = leaguePage.getElementsByClass("ismTabHeading").text();
-				System.out.println("Loaded League: " + leagueName);
+				//TODO Debug Text
+				//System.out.println("Loaded League: " + leagueName);
 
+				
 				//Works Out Gameweek
 				gameweek = leagueTable.select("a[href]").first().attr("href").split("/")[4];
-
-				System.out.println("The Current Gameweek is " + gameweek);
-				System.out.print("Loading Managers...  ");
+				
+				//TODO Debug Text
+				//System.out.println("The Current Gameweek is " + gameweek);
+				//System.out.print("Loading Managers...  ");
 
 				int counter = 0;
 
@@ -101,8 +106,8 @@ public class ClassicLeague {
 						}
 					} 
 				}
-
-				System.out.println("Managers Loaded");
+				//TODO Debug Text
+				//System.out.println("Managers Loaded");
 			}
 		}
 		catch (ConnectException c) {
@@ -144,9 +149,13 @@ public class ClassicLeague {
 
 	public void loadTeams() {
 		//Runs through all the entries to load the Teams
+		int n = 1;
 		for (Entry<String,Team> entry: managerMap.entrySet()) {
+			
+			System.out.print("Loading Teams for '" + leagueName + "'... Team " + n++ + "/" + managerMap.size() + "\r");
 			entry.getValue().getTeam();
 		}
+		System.out.println("");
 	}
 
 	public int timeoutCheck() {
