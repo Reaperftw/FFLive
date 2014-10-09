@@ -58,7 +58,7 @@ public class Main {
 		//Initial open
 		Calendar currentDate = Calendar.getInstance();
 		System.out.println("");
-		System.out.println("FFLive v3.1.1 - Started " + currentDate.getTime());
+		System.out.println("FFLive v3.1.2 - Started " + currentDate.getTime());
 		System.out.print("Loading Config...  ");
 
 		//Load Config File

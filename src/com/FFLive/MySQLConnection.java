@@ -1575,7 +1575,7 @@ public class MySQLConnection {
 					}
 					else {
 						Map <Integer, Integer> temp = new TreeMap <Integer, Integer>();
-						temp.put(n, gwScores.getInt("livePoints"));
+						temp.put(n, gwScores.getInt("livePosition"));
 						teamsGwPosition.put(gwScores.getString("teamName"), temp);
 					}
 				}
