@@ -192,6 +192,7 @@ public class Main {
 							log.log(4,"Will generate Player List and Update for Gameweek " + parts[1] + " (Does not update old scores)\n");
 							dbAccess.generatePlayerList(gw);
 							dbAccess.updatePlayers(gw, true);
+							dbAccess.makePlayerGraph(gw);
 							dbAccess.posDifferential(gw);
 						}
 						catch(NumberFormatException n) {
@@ -212,6 +213,8 @@ public class Main {
 						}
 						dbAccess.generatePlayerList(gw);
 						dbAccess.updatePlayers(gw, false);
+						dbAccess.makePlayerGraph(gw);
+						dbAccess.updateScores(gw);
 						dbAccess.posDifferential(gw);
 					}
 					catch(NumberFormatException n) {
@@ -490,12 +493,14 @@ public class Main {
 					dbAccess.setWebFront("index", "Live Updating");
 					log.log(4,"Starting Live Update for all Selected Leagues...  \n");
 					dbAccess.generatePlayerList(gameweek);
+					dbAccess.updatePlayers(gameweek, false);
+					dbAccess.makePlayerGraph(gameweek);
 
 					log.log(4,"Live Running Until " + endOfDay.getTime() + ", or End program by creating stop.txt in this directory... \n");
 
 					while (Calendar.getInstance().before(endOfDay)) {
 						dbAccess.updatePlayers(gameweek, false);
-						System.out.println("");
+						log.ln(5);
 						dbAccess.updateScores(gameweek);
 						if (new File("stop.txt").exists()) {
 							log.log(4,"Trigger File found, exiting...  \n");

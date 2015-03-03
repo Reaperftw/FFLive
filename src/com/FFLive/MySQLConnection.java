@@ -1775,6 +1775,7 @@ public class MySQLConnection {
 						generatePlayerList(x);
 						Main.log.log(4,"Processing Week " + x + "/" + lastGW + "... Updating Player Scores...            \r");
 						updatePlayers(x, true);
+						makePlayerGraph(gw);
 						Main.log.log(4,"Processing Week " + x + "/" + lastGW + "... Done!                                \n");
 					}
 				}
@@ -2306,7 +2307,7 @@ public class MySQLConnection {
 	public void makePlayerGraph(int gw) {
 		Map <String, Map<Integer, Integer>> playersGWPicks = new HashMap<String, Map<Integer,Integer>>();
 		//Map <String, Map<Integer, Integer>> playersForm = new HashMap<String, Map<Integer,Integer>>();
-
+		Main.log.log(5,"Making Player Picks Graph...                \r");
 		for(int x = 1; x <= gw; x++){
 			try {
 				PreparedStatement selPlayers = conn.prepareStatement("SELECT playerID, webName, playerCount FROM playersGW? ORDER BY playerCount DESC");
@@ -2430,6 +2431,7 @@ public class MySQLConnection {
 		for(int temp: gameweeks) {
 			generatePlayerList(temp);
 			updatePlayers(temp, false);
+			makePlayerGraph(temp);
 			posDifferential(temp);
 			postBenchScores(temp);
 		}
