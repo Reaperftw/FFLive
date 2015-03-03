@@ -2,7 +2,7 @@
  * FFLive - Java program to scrape information from http://fantasy.premierleague.com/ 
  * and display it with real time updating leagues.
  * 
- * Copyright (C) 2014  Matt Croydon
+ * Copyright (C) 2015  Matt Croydon
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ import java.util.HashMap;
 
 public class DateParser {
 
+	//public ConsoleLog log = new ConsoleLog(5);
 	public String inDate = new String();
 	private	HashMap<String, String[]> month = new HashMap<String, String[]>();
 	
@@ -75,15 +76,9 @@ public class DateParser {
 		converted[4] = Integer.parseInt(time[1].trim());
 		
 
-		//Calendar rightNow = Calendar.getInstance();
 		Calendar date = Calendar.getInstance();
 		date.set(converted[0],converted[1],converted[2],converted[3],converted[4],0);
 		
-		//date.add(Calendar.HOUR_OF_DAY, 2);
-		
-		/*System.out.println(rightNow.getTime());
-		System.out.println(date.getTime());
-		System.out.println(rightNow.before(date));*/
 		
 		return date;
 		

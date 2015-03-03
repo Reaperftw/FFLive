@@ -2,7 +2,7 @@
  * FFLive - Java program to scrape information from http://fantasy.premierleague.com/ 
  * and display it with real time updating leagues.
  * 
- * Copyright (C) 2014  Matt Croydon
+ * Copyright (C) 2015  Matt Croydon
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ public class Team {
 	public String[] bench = {"0", "0", "0", "0"};
 	public String[] captains = {"0", "0"};
 	public String managerID;
-	public String GW;
+	public int GW;
 	public String teamName;
 	public String managerName = null;
 	public int position = 0;
@@ -63,14 +63,19 @@ public class Team {
 	public int gameWeekScore;
 	private int timeout = 0;
 
-	public Team(String manID, String gameWeek, String leaguePoints, String lPosition) {
+	public Team(String manID, int gameWeek) {
+		managerID = manID;
+		GW = gameWeek;
+	}
+	
+	public Team(String manID, int gameWeek, String leaguePoints, String lPosition) {
 		managerID = manID;
 		GW = gameWeek;
 		lpScore = Integer.parseInt(leaguePoints);
 		position = Integer.parseInt(lPosition);
 	}
 
-	public Team(String manID, String gameWeek, String leaguePoints, String wins, String draws, String losses, String H2HScore, String lPosition) {
+	public Team(String manID, int gameWeek, String leaguePoints, String wins, String draws, String losses, String H2HScore, String lPosition) {
 		managerID = manID;
 		GW = gameWeek;
 		lpScore = Integer.parseInt(leaguePoints);
@@ -89,12 +94,11 @@ public class Team {
 				//Average Team Score will be dealt with when it builds the league.
 				teamName = "Average";
 				managerName = "Average";
-				//TODO DEbug text
-				//System.out.println("Average Team Added...");
+				
+				Main.log.log(7,"Average Team Added...\n");
 			}
 			else {
-				//TODO Debug Text
-				//System.out.println("Connecting to Team " + managerID);
+				Main.log.log(7,"Connecting to Team " + managerID);
 				//The FF Team in question's webpage
 				Document doc = Jsoup.connect("http://fantasy.premierleague.com/entry/" + managerID + "/event-history/" + GW + "/").get();
 
@@ -112,11 +116,9 @@ public class Team {
 					deductions = Integer.parseInt(transfer[1].replace("pts)", "").trim());
 				}
 				else {
-					//TODO Debug
-					System.out.println("Error in Deductions and Transfers!");
+					Main.log.log(3,"Error in Deductions and Transfers for TeamID:" + managerID + "\n");
 				}
-				//TODO Debu Text
-				//System.out.print("Getting Team Data For " + teamName + "...  ");
+				Main.log.log(7,"Getting Team Data For " + teamName + "...  \n");
 
 				//Overall Points Score and Gameweek Score, Saved for Previous Week Needs
 				opScore = Integer.parseInt(doc.getElementsByClass("ismRHSDefList").text().split(" ")[2].replaceAll("\\D+",""));
@@ -180,49 +182,62 @@ public class Team {
 						}
 					}
 				}
-				//TODO
-				//System.out.println("Done!");
+				Main.log.log(8,"Done!\n");
 			}
 		}
 		catch (ConnectException c) {
 			if(timeoutCheck() > 4) {
-				System.err.println("Too Many Timeouts Connecting to ID: " + managerID + ".. Skipping");
+				Main.log.ln(2);
+				Main.log.log(2,"Too Many Timeouts Connecting to ID: " + managerID + " For GW:" + GW + ".. Skipping\n");
 			}
-			//TODO
-			//System.out.println("-- Timeout Connecting, Retrying...");
-			getTeam();
+			else {
+				Main.log.ln(6);
+				Main.log.log(6,"Timeout Connecting, Retrying...\n");
+				getTeam();
+			}
 		}
 		catch(SocketTimeoutException e) {
 			if(timeoutCheck() > 4) {
-				System.err.println("Too Many Timeouts Connecting to ID: " + managerID + ".. Skipping");
+				Main.log.ln(2);
+				Main.log.log(2,"Too Many Timeouts Connecting to ID: " + managerID + " For GW:" + GW + ".. Skipping\n");
 			}
-			
-			//TODO
-			//System.out.println("-- Timeout Connecting, Retrying...");
-			getTeam();
+			else {
+				Main.log.ln(6);
+				Main.log.log(6,"Timeout Connecting, Retrying...\n");
+				getTeam();
+			}
 		}
 		catch (HttpStatusException i) {
 			if(timeoutCheck() > 4) {
-				System.err.println("Too Many Timeouts Connecting to ID: " + managerID + ".. Skipping");
+				Main.log.ln(2);
+				Main.log.log(2,"Too Many Timeouts Connecting to ID: " + managerID + " For GW:" + GW + ".. Skipping\n");
 			}
-			//TODO
-			//System.out.println("-- Timeout Connecting, Retrying...");
-			getTeam();
+			else {
+				Main.log.ln(6);
+				Main.log.log(6,"Timeout Connecting, Retrying...\n");
+				getTeam();
+			}
 		}
 		catch (UnknownHostException g) {
-			System.err.println("No Connection Connecting to ID: " + managerID + ".. Skipping");
+			Main.log.ln(2);
+			Main.log.log(2,"No Connection Connecting to ID: " + managerID + " For GW:" + GW + ".. Skipping\n");
 		}
 		catch (NoRouteToHostException h) {
-			System.err.println("No Connection Connecting to ID: " + managerID + ".. Skipping");
+			Main.log.ln(2);
+			Main.log.log(2,"No Connection Connecting to ID: " + managerID + " For GW:" + GW + ".. Skipping\n");
 		}
 		catch(IOException f) {
-			System.err.println("-- In addPlayers: " + f);
+			Main.log.ln(2);
+			Main.log.log(2,"-- In addPlayers: " + f);
 			if(timeoutCheck() > 2) {
-				System.err.println("Problem Connecting to ID: " + managerID + ".. Skipping");
+				Main.log.ln(2);
+				Main.log.log(2,"  Problem Connecting to ID: " + managerID + " For GW:" + GW + ".. Skipping\n");
 			}
-			//TODO
-			//System.out.println("-- Retrying...");
-			getTeam();
+			else {
+				Main.log.ln(2);
+				Main.log.log(2,"-- Retrying...\n");
+				getTeam();
+			}
 		}
 		
 	}

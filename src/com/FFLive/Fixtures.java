@@ -2,7 +2,7 @@
  * FFLive - Java program to scrape information from http://fantasy.premierleague.com/ 
  * and display it with real time updating leagues.
  * 
- * Copyright (C) 2014  Matt Croydon
+ * Copyright (C) 2015  Matt Croydon
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ import java.net.ConnectException;
 import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.Calendar;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -33,6 +34,7 @@ import org.jsoup.select.Elements;
 public class Fixtures {
 
 	private int timeout = 0;
+	//There is a reason this is a string, needs to be blank for unknown gameweek to fetch current
 	public String loadGameweek = "";
 	
 	public String gameweek = null;
@@ -55,12 +57,11 @@ public class Fixtures {
 		//Assuming this page shows the current gameweek
 		try {
 			//Loading Fixtures Page
-			//TODO Add some debugging here for connections etc.
 			if(loadGameweek.equals("")) {
-				System.out.print("Checking Gameweek, Fixtures and Start Times...  ");
+				Main.log.log(6, "Checking Gameweek, Fixtures and Start Times...  ");
 			}
 			else {
-				System.out.print("Checking Fixtures and Start Times for GW: " + loadGameweek + "...  ");
+				Main.log.log(6, "Checking Fixtures and Start Times for GW: " + loadGameweek + "...  ");
 			}
 			String URL = ("http://fantasy.premierleague.com/fixtures/" + loadGameweek);
 			Document fixtures = Jsoup.connect(URL).get();
@@ -69,44 +70,54 @@ public class Fixtures {
 			Elements gameweekText = fixtureTable.select("caption.ismStrongCaption");
 			Elements individualFixtures = fixtureTable.select("tr.ismFixture");
 			
-			
 			gameweek = gameweekText.text().split("-")[0].replaceAll("\\D+", "").trim();
 
 			startTime = gameweekText.text().split("-")[1].trim();
 			kickOff = individualFixtures.first().select("td").first().text().trim();
 			endTime = individualFixtures.last().select("td").first().text().trim();
-			//Add Two Hours After final kickoff to make sure match has finished.
-			//Not needed anymore, check happens elsewhere but correct time also needed.
-			//endTime.add(Calendar.HOUR_OF_DAY, 2);
-			
-			
 			
 		}
 		catch (ConnectException c) {
 			if (timeoutCheck() > 10) {
-				System.err.println("Too Many Timeouts... Skipping");
+				Main.log.log(2, "Too Many Timeouts... Skipping");
 			}
-			System.out.println("Timeout Connecting. Retrying...");
-			loadFixtures();
+			else {
+				Main.log.log(6, "Timeout Connecting. Retrying...");
+				loadFixtures();
+			}
 		}
 		catch (SocketTimeoutException e) {
 			if (timeoutCheck() > 10) {
-				System.err.println("Too Many Timeouts... Skipping");
+				Main.log.log(2, "Too Many Timeouts... Skipping");
 			}
-			System.out.println("Timeout Connecting. Retrying...");
-			loadFixtures();
+			else{
+				Main.log.log(6, "Timeout Connecting. Retrying...");
+				loadFixtures();
+			}
 		}
 		catch (UnknownHostException g) {
-			System.err.println("No Connection... Exiting");
+			Main.log.log(1, "No Connection... Exiting");
 			System.exit(950);
 		}
 		catch (NoRouteToHostException h) {
-			System.err.println("No Connection... Exiting");
+			Main.log.log(1, "No Connection... Exiting");
 			System.exit(951);
 		}
 		catch (IOException f) {
-			System.err.println("In Fixtures: " + f);
+			Main.log.log(2, "In Fixtures: " + f);
+			Main.log.log(9, f);
 		}
+	}
+	
+	public boolean gameweekStarted () {
+		boolean started = false;
+		Calendar now = Calendar.getInstance();
+		DateParser convert = new DateParser(startTime);
+		Calendar start = convert.convertDate();
+		if(now.after(start)){
+			started = true;
+		}
+		return started;
 	}
 
 	public int timeoutCheck() {

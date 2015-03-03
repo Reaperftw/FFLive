@@ -2,7 +2,7 @@
  * FFLive - Java program to scrape information from http://fantasy.premierleague.com/ 
  * and display it with real time updating leagues.
  * 
- * Copyright (C) 2014  Matt Croydon
+ * Copyright (C) 2015  Matt Croydon
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,6 +48,7 @@ public class Player {
 	public String playerTeam = null;
 	public String position = null;
 	public int playerScore = 0;
+	public int teamNumber = 0;
 	//public String scoreBreakdown = null;
 	public String gameweekBreakdown = null;
 	public String currentFixture = null;
@@ -55,7 +56,7 @@ public class Player {
 	public String status = null;
 	public String news = null;
 	public String photo = null;
-	public String GW = null;
+	public int GW = 0;
 
 	private int timeout = 0;
 	//Status a = 100%, d = 75-25%, n=0%
@@ -64,7 +65,7 @@ public class Player {
 		playerID= playerid;
 	}
 	
-	public Player (String playerid, String gameweek) {
+	public Player (String playerid, int gameweek) {
 		playerID= playerid;
 		GW = gameweek;
 	}
@@ -79,19 +80,23 @@ public class Player {
 					playerScore = 0;
 				}
 				else {
-					playerScore = Integer.parseInt(averageScore.text().replaceAll("\\D+", ""));
+					try {
+						playerScore = Integer.parseInt(averageScore.text().replaceAll("\\D+", ""));
+					}
+					catch (NumberFormatException n) {
+						Main.log.log(2,"Issue saving Average Team..." + n + "\n");
+					}
 				}
-				//TODO Number Format Exception?
 				playerName = "Average";
 			}
 			else {
+				Main.log.log(7, "Fetching Player " + playerID + "\n");
 				//Connects to the players info page
 				InputStream playerJson = new URL("http://fantasy.premierleague.com/web/api/elements/" + playerID + "/").openStream();
 				//Reads the data into a JSON object (via casting into a regular object)
 				Reader reader = new InputStreamReader(playerJson, "UTF-8");
 				JSONObject playerValues =  (JSONObject)JSONValue.parse(reader);
 
-				//TODO Debug TExt to be added to Players
 				//TODO Check if there are values overlength
 				//Max Length Ref playerCount INT DEFAULT 1 NOT NULL, firstName VARCHAR(40), lastName VARCHAR(40),
 				//webName VARCHAR(50), score INT, gameweekBreakdown VARCHAR(250), breakdown VARCHAR(250), 
@@ -103,6 +108,7 @@ public class Player {
 				lastName = playerValues.get("second_name").toString();
 				playerName = playerValues.get("web_name").toString();
 				playerTeam = playerValues.get("team_name").toString();
+				teamNumber = Integer.parseInt(playerValues.get("team_id").toString());
 				position = playerValues.get("type_name").toString();
 				/*
 			JSONObject test = (JSONObject)JSONValue.parse(playerValues.get("fixture_history").toString());
@@ -137,26 +143,26 @@ public class Player {
 		}
 		catch(ConnectException c) {
 			if(timeoutCheck() > 3) {
-				System.err.println("Too Many Timeouts.. Skipping");
+				Main.log.log(2,"Too Many Timeouts.. Skipping\n");
 			}
-			System.out.println("Timeout Connecting, Retrying...");
+			Main.log.log(6,"Timeout Connecting, Retrying...\n");
 			getPlayer();
 		}
 		catch(SocketTimeoutException e) {
 			if(timeoutCheck() > 3) {
-				System.err.println("Too Many Timeouts.. Skipping");
+				Main.log.log(2,"Too Many Timeouts.. Skipping\n");
 			}
-			System.out.println("Timeout Connecting, Retrying...");
+			Main.log.log(6,"Timeout Connecting, Retrying...\n");
 			getPlayer();
 		}
 		catch (UnknownHostException g) {
-			System.err.println("No Connection... Skipping");
+			Main.log.log(6,"No Connection... Skipping\n");
 		}
 		catch (NoRouteToHostException h) {
-			System.err.println("No Connection... Skipping");
+			Main.log.log(6,"No Connection... Skipping\n");
 		}
 		catch (IOException f) {
-			System.out.println("In getPlayer: " + f);
+			Main.log.log(6,"In getPlayer: " + f + "\n");
 		}
 	}
 

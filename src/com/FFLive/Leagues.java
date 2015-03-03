@@ -2,7 +2,7 @@
  * FFLive - Java program to scrape information from http://fantasy.premierleague.com/ 
  * and display it with real time updating leagues.
  * 
- * Copyright (C) 2014  Matt Croydon
+ * Copyright (C) 2015  Matt Croydon
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,11 +44,36 @@ public class Leagues {
 		
 	}
 	
+	public void addLeague(String leagueIDString) {
+		try {
+			addLeague(Integer.parseInt(leagueIDString), 41);
+		}
+		catch(NumberFormatException n) {
+			Main.log.log(2,"Invalid Number for LeagueID or Starting GW.. See Error Below for More Details...\n");
+			Main.log.log(2,n.toString());
+		}
+	}
 	
-	public void addLeague(String leagueID) {
+	public void addLeague(int leagueID) {
+		addLeague(leagueID, 41);
+	}
+	
+	public void addLeague(String leagueIDString, String startingGWString) {
+		try {
+			addLeague(Integer.parseInt(leagueIDString), Integer.parseInt(startingGWString));
+		}
+		catch(NumberFormatException n) {
+			Main.log.log(2,"Invalid Number for LeagueID or Starting GW.. See Error Below for More Details...\n");
+			Main.log.log(2,n.toString());
+		}
+	}
+	
+	public void addLeague(int leagueID, int startingGW) {
 		//Takes a league ID, loads the page and checks if it is a H2H League or a Classic League
 		try {
-			System.out.print("Adding League " + leagueID + "...  ");
+			
+			Main.log.log(6,"Adding League " + leagueID + "...  \n");
+			
 			String URL = ("http://fantasy.premierleague.com/my-leagues/" + leagueID + "/standings/");
 			Document leaguePage = Jsoup.connect(URL).get();
 
@@ -70,48 +95,52 @@ public class Leagues {
 			if (!H2HleagueTable.isEmpty()) {
 				H2H = true;
 			}
-			
+
 			if (H2H && classic) {
 				//Error both cannot be true
-				System.err.println("There has been an error loading " + leagueID + "... Aborting");		
+				Main.log.log(3,"There has been an error loading " + leagueID + "... Aborting\n");		
 			}
 			else if (H2H && !classic) {
-				System.out.println("H2H League detected!");
-				h2hLeague.add(new H2HLeague(Integer.parseInt(leagueID)));
+				//System.out.println("H2H League detected!");
+				h2hLeague.add(new H2HLeague(leagueID, startingGW));
 			}
 			else if (!H2H && classic) {
-				System.out.println("Classic League detected!");
-				classicLeague.add(new ClassicLeague(Integer.parseInt(leagueID)));
+				//System.out.println("Classic League detected!");
+				classicLeague.add(new ClassicLeague(leagueID, startingGW));
 			}
 			else if (!H2H && !classic) {
-				System.out.println("This League either contains no teams or the season has not yet begun!");
+				Main.log.log(3,"This League either contains no teams or the season has not yet begun!\n");
 			}
 		}
 		catch (ConnectException c) {
 			if (timeoutCheck() > 10) {
-				System.err.println("Too Many Timeouts... Skipping");
+				Main.log.log(2,"Too Many Timeouts... Skipping\n");
 			}
-			System.out.println("Timeout Connecting. Retrying...");
-			addLeague(leagueID);
+			Main.log.log(6,"Timeout Connecting. Retrying...\n");
+			addLeague(leagueID, startingGW);
 		}
 		catch (SocketTimeoutException e) {
 			if (timeoutCheck() > 10) {
-				System.err.println("Too Many Timeouts... Skipping");
+				Main.log.log(2,"Too Many Timeouts... Skipping\n");
 			}
-			System.out.println("Timeout Connecting. Retrying...");
-			addLeague(leagueID);
+			Main.log.log(6,"Timeout Connecting. Retrying...\n");
+			addLeague(leagueID, startingGW);
 		}
 		catch (UnknownHostException g) {
-			System.err.println("No Connection... Skipping");
+			Main.log.log(2,"No Connection... Skipping\n");
 		}
 		catch (NoRouteToHostException h) {
-			System.err.println("No Connection... Skipping");
+			Main.log.log(2,"No Connection... Skipping\n");
+		}
+		catch (NumberFormatException n) {
+			Main.log.log(2,"Invalid Number for LeagueID or Starting GW.. See Error Below for More Details...\n");
+			Main.log.log(2,n.toString());
 		}
 		catch (IOException f) {
-			System.err.println("--In loadLeague: " + f);
+			Main.log.log(2,"--In loadLeague: " + f + "\n");
 		}
 		catch (NullPointerException i) {
-			System.err.println("This League either contains no teams or the season has not yet begun!");
+			Main.log.log(3,"This League either contains no teams or the season has not yet begun!\n");
 			//System.exit(3);
 		}
 	}

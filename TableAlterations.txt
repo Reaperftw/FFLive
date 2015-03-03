@@ -8,3 +8,5 @@ WAS					  (10)						 (30)
 
 After GW7 EDITS TO teamsGW#
 Added Columns deductions INT DEFAULT 0, transfers INT DEFAULT 0, benchScore DEFAULT 0
+
+After GW 8 Added teamID INT column to PlayersGW#
