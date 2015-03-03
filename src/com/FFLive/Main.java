@@ -226,7 +226,7 @@ public class Main {
 					else {
 						log.log(4,"Marking all leagues for Post Update for Gameweek " + parts[1] + "\n");
 						dbAccess.clearPostUpdate(parts[1].trim());
-						log.log(4,"Restart without arguments...\n");
+						normal=true;
 					}
 				}
 				else if (parts[0].equals("teams")) {
@@ -236,7 +236,7 @@ public class Main {
 					else {
 						log.log(4,"Marking all leagues for Team Update for Gameweek " + parts[1] + "\n");
 						dbAccess.clearTeamStatus(parts[1].trim());
-						log.log(4,"Restart without arguments...\n");
+						normal=true;
 					}
 				}
 				else if (parts[0].equals("buildTeams")) {
@@ -263,20 +263,24 @@ public class Main {
 
 					}
 				}
-				else if (parts[0].equals("test")) {
-
-					//ClassicLeague balls = new ClassicLeague(112519);
-					//balls.loadLeague();
-					//H2HLeague balls = new H2HLeague(28716,1);
-					//balls.loadAllFixtures(26);
-
-					//dbAccess.contructLeagueData("h");
-					//dbAccess.fetchMissingGWs(false, true);
-					//dbAccess.rebuildTransfers(24);
-					//dbAccess.rebuildGWScores(24);
+				else if(parts[0].equals("help")) {
+					log.log(4,"FFLive Version 3.5 - Matt Croydon 2015, See Source on github for Licence github/Reaperftw/FFLive\n"
+							+ "Valid Arguments"
+							+ "--logLevel \tSet Logging Level(between 0-10), Must be first Arugment for effect\n"
+							+ "--generate=# \tRegenerate and update player List and update scores for GW:#\n"
+							+ "--generateCurr \tAs Above for Current GW\n"
+							+ "--post=# \tMark GW:# for Post GW Update\n"
+							+ "--teams=# \tMark GW:# for Team Update\n"
+							+ "--buildTeams \tFetches All Missing Teams Compared to currently stored Teams\n"
+							+ "--rebuildAllTeams \tFetches ALL TEAMS compared to currently stored Teams\n"
+							+ "--buildLeague=# \tRebuilds League Scores for # - Format LeagueID1/StartingGW,LeagueID2/StartingGW\n"
+							+ "--help \t This Text\n");
 				}
+				//else if (parts[0].equals("test")) {					
+				//}
 				else {
 					log.log(2,"Invalid Argument: " + test + "... Individual Arguments should not contain spaces...\n",0);
+					log.log(4, "Use --help for summary");
 				}
 			}
 		}
