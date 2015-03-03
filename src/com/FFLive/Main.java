@@ -263,8 +263,20 @@ public class Main {
 
 					}
 				}
+				else if (parts[0].equals("buildMissingLeague")) {
+					if (parts.length!=2) {
+						log.log(2,"Invalid arguments given for " + test + "\n");
+					}
+					else {
+						log.log(4,"Starting rebuild of given leagues and missing teams...\n");
+						dbAccess.fetchMissingGWs(false, false);
+						dbAccess.rebuildTransfers();
+						dbAccess.rebuildGWScores();
+						dbAccess.contructLeagueData(parts[1].trim());
+					}
+				}
 				else if(parts[0].equals("help")) {
-					log.log(4,"FFLive Version 3.5 - Matt Croydon 2015, See Source on github for Licence github/Reaperftw/FFLive\n"
+					log.log(4,"FFLive Version 3.5 - Matt Croydon 2015, See Source on github for Licence github.com/Reaperftw/FFLive\n"
 							+ "Valid Arguments"
 							+ "--logLevel \tSet Logging Level(between 0-10), Must be first Arugment for effect\n"
 							+ "--generate=# \tRegenerate and update player List and update scores for GW:#\n"
@@ -274,6 +286,7 @@ public class Main {
 							+ "--buildTeams \tFetches All Missing Teams Compared to currently stored Teams\n"
 							+ "--rebuildAllTeams \tFetches ALL TEAMS compared to currently stored Teams\n"
 							+ "--buildLeague=# \tRebuilds League Scores for # - Format LeagueID1/StartingGW,LeagueID2/StartingGW\n"
+							+ "--buildMissingLeague=# \tAs Above but also fetches missing teams\n"
 							+ "--help \t This Text\n");
 				}
 				//else if (parts[0].equals("test")) {					
