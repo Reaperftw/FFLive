@@ -292,8 +292,22 @@ public class H2HLeague {
 				Elements tableRows = fixturesPage.select("table.ismTable.ismMatchesTable").select("tr.ismResult");
 				for(Element row: tableRows) {
 					int gw = Integer.parseInt(row.select("td").first().text());
-					String homeID = row.select("td.ismHome").select("a").attr("href").split("/")[2];
-					String awayID = row.select("td.ismAway").select("a").attr("href").split("/")[2];
+					String homeID = new String();
+					String awayID = new String();
+					if(row.select("td.ismHome").select("a").attr("href").equals("")) {
+						homeID = "0";
+					}
+					else {
+						homeID = row.select("td.ismHome").select("a").attr("href").split("/")[2];
+					}
+					
+					if (row.select("td.ismAway").select("a").attr("href").equals("")) {
+						awayID = "0";
+					}
+					else {
+						awayID = row.select("td.ismAway").select("a").attr("href").split("/")[2];
+					}
+					
 					if(gw > stopGW) {
 						nextPage = false;
 						break;

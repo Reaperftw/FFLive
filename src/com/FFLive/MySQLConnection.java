@@ -183,7 +183,7 @@ public class MySQLConnection {
 			}
 
 
-			Main.log.log(4,"Ready!",0);
+			Main.log.log(4,"Ready!\n",0);
 
 		} catch (SQLException e) {
 			Main.log.ln(1);
@@ -1775,10 +1775,10 @@ public class MySQLConnection {
 						generatePlayerList(x);
 						Main.log.log(4,"Processing Week " + x + "/" + lastGW + "... Updating Player Scores...            \r");
 						updatePlayers(x, true);
-						makePlayerGraph(gw);
 						Main.log.log(4,"Processing Week " + x + "/" + lastGW + "... Done!                                \n");
 					}
 				}
+				makePlayerGraph(gw);
 			}
 		}
 		catch (SQLException e) {
@@ -1809,7 +1809,7 @@ public class MySQLConnection {
 			//Rebuild OP Scores
 			Main.log.log(5,"Updating GW Scores...                                     \r");
 			for(int x = 1; x < gw; x++) {
-				Main.log.log(5,"Updating GW Scores... GW:" + x + "/" + gw + "...                        \r");				
+				Main.log.log(5,"Updating GW Scores... GW:" + x + "/" + (gw-1) + "...                        \r");				
 				PreparedStatement getGWTeams = conn.prepareStatement("SELECT managerID, op, liveOP, gw FROM teamsGW?");
 				getGWTeams.setInt(1, x);
 				ResultSet currGWTeams = getGWTeams.executeQuery();

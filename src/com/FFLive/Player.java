@@ -164,6 +164,10 @@ public class Player {
 		catch (IOException f) {
 			Main.log.log(6,"In getPlayer: " + f + "\n");
 		}
+		catch (NullPointerException n) {
+			Main.log.log(2, "Missing Player Field with ID:" + playerID + " " + n + "\n");
+			Main.log.log(9,n);
+		}
 	}
 
 	public int timeoutCheck() {

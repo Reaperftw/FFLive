@@ -192,7 +192,6 @@ public class Main {
 							log.log(4,"Will generate Player List and Update for Gameweek " + parts[1] + " (Does not update old scores)\n");
 							dbAccess.generatePlayerList(gw);
 							dbAccess.updatePlayers(gw, true);
-							dbAccess.makePlayerGraph(gw);
 							dbAccess.posDifferential(gw);
 						}
 						catch(NumberFormatException n) {
@@ -356,10 +355,10 @@ public class Main {
 						}
 
 						if (postNum == 1) {
-							log.log(4,"Queueing " + postNum + " League for Post GW Update. \n",0);
+							log.log(4,"Queueing " + postNum + " League for Post GW Update. ");
 						}
 						else {
-							log.log(4,"Queueing " + postNum + " Leagues for Post GW Update. \n",0);
+							log.log(4,"Queueing " + postNum + " Leagues for Post GW Update. ");
 						}
 
 						if(lateNum == 1) {
@@ -431,10 +430,10 @@ public class Main {
 						}
 
 						if (addedLive == 1) {
-							log.log(5,addedLive + " League to be Live Updated. ",0);
+							log.log(5,addedLive + " League to be Live Updated. ");
 						}
 						else {
-							log.log(5,addedLive + " Leagues to be Live Updated. ",0);
+							log.log(5,addedLive + " Leagues to be Live Updated. ");
 						}
 
 						if(removed == 1) {
