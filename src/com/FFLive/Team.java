@@ -95,6 +95,11 @@ public class Team {
 				teamName = "Average";
 				managerName = "Average";
 				
+				//Needed for initial setup and post GW updates
+				Player average = new Player("-1");
+				average.getPlayer();
+				gameWeekScore = average.playerScore;
+				
 				Main.log.log(7,"Average Team Added...\n");
 			}
 			else {

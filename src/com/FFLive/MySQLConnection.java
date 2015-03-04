@@ -678,24 +678,38 @@ public class MySQLConnection {
 
 	public void storeTeamGW(Team team, int gw) {
 		try {
-			PreparedStatement IteamsGW = conn.prepareStatement("INSERT INTO teamsGW? (managerID, teamName, managerName, liveOP, gw, transfers, deductions) values (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE teamName = ?, managerName = ?, liveOP = ?, gw = ?, transfers = ?, deductions = ?");
-			IteamsGW.setInt(1, gw);
-			IteamsGW.setString(2, team.managerID);
-			IteamsGW.setString(3, team.teamName);
-			IteamsGW.setString(4, team.managerName);
-			IteamsGW.setInt(5, team.opScore);
-			IteamsGW.setInt(6, team.gameWeekScore + team.deductions);
-			IteamsGW.setInt(7, team.transfers);
-			IteamsGW.setInt(8, team.deductions);
-			IteamsGW.setString(9, team.teamName);
-			IteamsGW.setString(10, team.managerName);
-			IteamsGW.setInt(11, team.opScore);
-			IteamsGW.setInt(12, team.gameWeekScore + team.deductions);			
-			IteamsGW.setInt(13, team.transfers);
-			IteamsGW.setInt(14, team.deductions);
+			if(team.managerID.equals("0")) {
+				PreparedStatement avStatement = conn.prepareStatement("INSERT INTO teamsGW? (managerID, teamName, managerName, liveOP, gw, transfers, deductions) values (0, 'Average', 'Average', op + ?, ?, 0, 0) ON DUPLICATE KEY UPDATE liveOP = op + ?, gw = ?");
 
-			IteamsGW.executeUpdate();
-			IteamsGW.close();
+				avStatement.setInt(1,gw);
+				avStatement.setInt(2,team.gameWeekScore);
+				avStatement.setInt(3,team.gameWeekScore);
+				avStatement.setInt(4,team.gameWeekScore);
+				avStatement.setInt(5,team.gameWeekScore);
+
+				avStatement.executeUpdate();
+				avStatement.close();
+			}
+			else {
+				PreparedStatement IteamsGW = conn.prepareStatement("INSERT INTO teamsGW? (managerID, teamName, managerName, liveOP, gw, transfers, deductions) values (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE teamName = ?, managerName = ?, liveOP = ?, gw = ?, transfers = ?, deductions = ?");
+				IteamsGW.setInt(1, gw);
+				IteamsGW.setString(2, team.managerID);
+				IteamsGW.setString(3, team.teamName);
+				IteamsGW.setString(4, team.managerName);
+				IteamsGW.setInt(5, team.opScore);
+				IteamsGW.setInt(6, team.gameWeekScore + team.deductions);
+				IteamsGW.setInt(7, team.transfers);
+				IteamsGW.setInt(8, team.deductions);
+				IteamsGW.setString(9, team.teamName);
+				IteamsGW.setString(10, team.managerName);
+				IteamsGW.setInt(11, team.opScore);
+				IteamsGW.setInt(12, team.gameWeekScore + team.deductions);			
+				IteamsGW.setInt(13, team.transfers);
+				IteamsGW.setInt(14, team.deductions);
+
+				IteamsGW.executeUpdate();
+				IteamsGW.close();
+			}
 
 		}
 		catch (SQLException e) {
@@ -708,18 +722,30 @@ public class MySQLConnection {
 
 	public void preStoreTeamGW(Team team, int gw) {
 		try {
-			PreparedStatement IteamsGW = conn.prepareStatement("INSERT INTO teamsGW? (managerID, teamName, managerName, op) values (?, ?, ?, ?) ON DUPLICATE KEY UPDATE teamName = ?, managerName = ?, op = ?");
-			IteamsGW.setInt(1, gw);
-			IteamsGW.setString(2, team.managerID);
-			IteamsGW.setString(3, team.teamName);
-			IteamsGW.setString(4, team.managerName);
-			IteamsGW.setInt(5, team.opScore);
-			IteamsGW.setString(6, team.teamName);
-			IteamsGW.setString(7, team.managerName);
-			IteamsGW.setInt(8, team.opScore);
+			if(team.managerID.equals("0")) {
+				PreparedStatement avStatement = conn.prepareStatement("INSERT INTO teamsGW? (managerID, teamName, managerName, op) SELECT managerID, teamName, managerName, liveOP FROM teamsGW? WHERE managerID = 0 ON DUPLICATE KEY UPDATE op = teamsGW?.liveOP");
 
-			IteamsGW.executeUpdate();
-			IteamsGW.close();
+				avStatement.setInt(1,gw);
+				avStatement.setInt(2,gw-1);
+				avStatement.setInt(3, gw-1);
+
+				avStatement.executeUpdate();
+				avStatement.close();
+			}
+			else {
+				PreparedStatement IteamsGW = conn.prepareStatement("INSERT INTO teamsGW? (managerID, teamName, managerName, op) values (?, ?, ?, ?) ON DUPLICATE KEY UPDATE teamName = ?, managerName = ?, op = ?");
+				IteamsGW.setInt(1, gw);
+				IteamsGW.setString(2, team.managerID);
+				IteamsGW.setString(3, team.teamName);
+				IteamsGW.setString(4, team.managerName);
+				IteamsGW.setInt(5, team.opScore);
+				IteamsGW.setString(6, team.teamName);
+				IteamsGW.setString(7, team.managerName);
+				IteamsGW.setInt(8, team.opScore);
+
+				IteamsGW.executeUpdate();
+				IteamsGW.close();
+			}
 
 		}
 		catch (SQLException e) {
@@ -2476,6 +2502,7 @@ public class MySQLConnection {
 		}
 
 		for (H2HLeague H2H: leagues.h2hLeague) {
+			//TODO Provision for Average Team
 			H2H.loadH2HLeague();
 			H2H.loadTeams();
 			storeLeague(H2H);
