@@ -1086,28 +1086,8 @@ public class MySQLConnection {
 				try {
 					Player player = new Player(Integer.toString(playerList.getInt("playerID")),gw);
 					player.getPlayer();
-					if(namesOnly) {
-						PreparedStatement UpPGw = conn.prepareStatement("UPDATE playersGW? set "
-								+ "firstName =?, "
-								+ "lastName =?, "
-								+ "webName = ?, "
-								+ "teamID = ?, "
-								+ "teamName = ?, "
-								+ "photo = ? "
-								+ "WHERE playerID = ?");
-						UpPGw.setInt(1, gw);
-						UpPGw.setString(2, player.firstName);
-						UpPGw.setString(3, player.lastName);
-						UpPGw.setString(4, player.playerName);
-						UpPGw.setInt(5, player.teamNumber);
-						UpPGw.setString(6, player.playerTeam);
-						UpPGw.setString(7, player.photo);
-						UpPGw.setInt(8, Integer.parseInt(player.playerID));
-						UpPGw.executeUpdate();
 
-						UpPGw.close();
-					}
-					else {
+					if(!namesOnly || player.playerID.equals("-1")) {
 						PreparedStatement UpPGw = conn.prepareStatement("UPDATE playersGW? set "
 								+ "firstName =?, "
 								+ "lastName =?, "
@@ -1136,6 +1116,27 @@ public class MySQLConnection {
 						UpPGw.setString(12, player.news);
 						UpPGw.setString(13, player.photo);
 						UpPGw.setInt(14, Integer.parseInt(player.playerID));
+						UpPGw.executeUpdate();
+
+						UpPGw.close();
+					}
+					else {
+						PreparedStatement UpPGw = conn.prepareStatement("UPDATE playersGW? set "
+								+ "firstName =?, "
+								+ "lastName =?, "
+								+ "webName = ?, "
+								+ "teamID = ?, "
+								+ "teamName = ?, "
+								+ "photo = ? "
+								+ "WHERE playerID = ?");
+						UpPGw.setInt(1, gw);
+						UpPGw.setString(2, player.firstName);
+						UpPGw.setString(3, player.lastName);
+						UpPGw.setString(4, player.playerName);
+						UpPGw.setInt(5, player.teamNumber);
+						UpPGw.setString(6, player.playerTeam);
+						UpPGw.setString(7, player.photo);
+						UpPGw.setInt(8, Integer.parseInt(player.playerID));
 						UpPGw.executeUpdate();
 
 						UpPGw.close();
@@ -1814,20 +1815,46 @@ public class MySQLConnection {
 				getGWTeams.setInt(1, x);
 				ResultSet currGWTeams = getGWTeams.executeQuery();
 				while(currGWTeams.next()) {
-					int newScore = currGWTeams.getInt("gw") + currGWTeams.getInt("op");
-					PreparedStatement updateThisGW = conn.prepareStatement("UPDATE teamsGW? SET liveOP = ? WHERE managerID = ?");
-					updateThisGW.setInt(1,x);
-					updateThisGW.setInt(2, newScore);
-					updateThisGW.setInt(3, currGWTeams.getInt("managerID"));
-					updateThisGW.executeUpdate();
-					updateThisGW.close();
+					//For the Average Team, fill in the GW score first from the PlayerID -1
+					if(currGWTeams.getInt("managerID")==0) {
+						PreparedStatement selAveragePlayer = conn.prepareStatement("SELECT playerID, score FROM playersGW? WHERE playerID = -1");
+						selAveragePlayer.setInt(1, x);
+						ResultSet avPlayer = selAveragePlayer.executeQuery();
+						while(avPlayer.next()) {
+							PreparedStatement averageScore = conn.prepareStatement("UPDATE teamsGW? SET gw = ?, liveOP = op + ? WHERE managerID = 0");
+							averageScore.setInt(1, x);
+							averageScore.setInt(2, avPlayer.getInt("score"));
+							averageScore.setInt(3, avPlayer.getInt("score"));
+							averageScore.executeUpdate();
 
-					PreparedStatement updateNextGW = conn.prepareStatement("UPDATE teamsGW? SET op = ? WHERE managerID = ?");
-					updateNextGW.setInt(1,x+1);
-					updateNextGW.setInt(2, newScore);
-					updateNextGW.setInt(3, currGWTeams.getInt("managerID"));
-					updateNextGW.executeUpdate();
-					updateNextGW.close();
+							PreparedStatement avNextGW = conn.prepareStatement("UPDATE teamsGW? set op = ? WHERE managerID = 0");
+							avNextGW.setInt(1,x+1);
+							avNextGW.setInt(2, avPlayer.getInt("score") + currGWTeams.getInt("op"));
+							avNextGW.executeUpdate();
+
+							averageScore.close();
+							avNextGW.close();
+						}
+						avPlayer.close();
+						selAveragePlayer.close();
+
+					}
+					else {
+						int newScore = currGWTeams.getInt("gw") + currGWTeams.getInt("op");
+						PreparedStatement updateThisGW = conn.prepareStatement("UPDATE teamsGW? SET liveOP = ? WHERE managerID = ?");
+						updateThisGW.setInt(1, x);
+						updateThisGW.setInt(2, newScore);
+						updateThisGW.setInt(3, currGWTeams.getInt("managerID"));
+						updateThisGW.executeUpdate();
+						updateThisGW.close();
+
+						PreparedStatement updateNextGW = conn.prepareStatement("UPDATE teamsGW? SET op = ? WHERE managerID = ?");
+						updateNextGW.setInt(1,x+1);
+						updateNextGW.setInt(2, newScore);
+						updateNextGW.setInt(3, currGWTeams.getInt("managerID"));
+						updateNextGW.executeUpdate();
+						updateNextGW.close();
+					}
 				}
 				getGWTeams.close();
 				currGWTeams.close();
@@ -1929,7 +1956,7 @@ public class MySQLConnection {
 				Main.log.log(4,"Rebuilding League " + cl.leagueID + " - GW:" + gw + "/" + cl.gameweek + "... Updating Positions               \r");
 				updatePositions(gw, cl.leagueID);
 
-				
+
 				//Set Next Week
 				PreparedStatement ltgwNextWeek = conn.prepareStatement("INSERT INTO leagues_teamsGW? (leagueID, managerID, lp, position) SELECT leagueID, managerID, liveLP, livePosition FROM leagues_teamsGW? WHERE leagueID = ? ON DUPLICATE KEY UPDATE lp = leagues_teamsGW?.liveLP, position = leagues_teamsGW?.livePosition");
 				ltgwNextWeek.setInt(1, gw+1);
@@ -1996,7 +2023,7 @@ public class MySQLConnection {
 			//Create Required Gameweek Tables
 			createGWTables(gw);
 			createGWTables(gw+1);
-			
+
 			//Fetch GW Scores and add them to Live LP
 			try {
 				for(String manIDs: h2h.managerMap.keySet()) {
@@ -2026,7 +2053,7 @@ public class MySQLConnection {
 				fixtureScores(gw, h2h.leagueID);
 				Main.log.log(4,"Rebuilding League " + h2h.leagueID + " GW:" + gw + "/" + h2h.gameweek + " Updating Positions...                          \r");
 				updatePositions(gw, h2h.leagueID);
-				
+
 				//Set Next Week Including wins, position and LP
 				PreparedStatement ltgwNextWeek = conn.prepareStatement("INSERT INTO leagues_teamsGW? (leagueID, managerID, lp, position, wins, loss, draw, points) SELECT leagueID, managerID, liveLP, livePosition, liveWin, liveLoss, LiveDraw, livePoints FROM leagues_teamsGW? WHERE leagueID = ? ON DUPLICATE KEY UPDATE lp = leagues_teamsGW?.liveLP, position = leagues_teamsGW?.livePosition, wins = leagues_teamsGW?.liveWin, loss = leagues_teamsGW?.liveLoss, draw = leagues_teamsGW?.liveDraw, points =leagues_teamsGW?.livePoints");
 				ltgwNextWeek.setInt(1, gw+1);
