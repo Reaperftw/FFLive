@@ -198,11 +198,20 @@ public class MySQLConnection {
 			PreparedStatement delStatus = conn.prepareStatement("DELETE FROM status WHERE LeagueID = ? AND Gameweek = ?");
 			delStatus.setString(1, leagueID);
 			delStatus.setInt(2, gameweek);
-			PreparedStatement delTeams = conn.prepareStatement("DELETE FROM ? WHERE leagueID = ?");
-			delTeams.setString(1, "leagues_teamsGW" +gameweek);
+			delStatus.executeUpdate();
+			
+			PreparedStatement delTeams = conn.prepareStatement("DELETE FROM leagues_teamsGW? WHERE leagueID = ?");
+			delTeams.setInt(1, gameweek);
 			delTeams.setString(2, leagueID);
+			delTeams.executeUpdate();
+			
+			PreparedStatement delLeague = conn.prepareStatement("DELETE FROM leagues WHERE ID = ?");
+			delLeague.setInt(1, gameweek);
+			delLeague.executeUpdate();
+			
 			delStatus.close();
 			delTeams.close();
+			delLeague.close();
 		}
 		catch (SQLException sql) {
 			Main.log.ln(2);
@@ -938,7 +947,7 @@ public class MySQLConnection {
 			//Insert Fixtures
 			int id = 1;
 			for (Entry<String, String> entry : league.fixtureMap.entrySet()) {
-				PreparedStatement ITH2HFixtures = conn.prepareStatement("INSERT INTO H2HGW? (leagueID, home, away, fixtureNo) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE fixtureNo = ?");
+				PreparedStatement ITH2HFixtures = conn.prepareStatement("INSERT INTO h2hGW? (leagueID, home, away, fixtureNo) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE fixtureNo = ?");
 				ITH2HFixtures.setInt(1, league.gameweek);
 				ITH2HFixtures.setInt(2, league.leagueID);
 				ITH2HFixtures.setInt(3, Integer.parseInt(entry.getKey()));
@@ -1009,7 +1018,7 @@ public class MySQLConnection {
 			CTPlayersGW.setInt(1,gw);
 			CTPlayersGW.executeUpdate();
 
-			PreparedStatement CTH2HFixture = conn.prepareStatement("CREATE TABLE IF NOT EXISTS H2HGW? (leagueID INT NOT NULL, home VARCHAR(30), away VARCHAR(30), fixtureNo INT, UNIQUE(leagueID, home, away))");
+			PreparedStatement CTH2HFixture = conn.prepareStatement("CREATE TABLE IF NOT EXISTS h2hGW? (leagueID INT NOT NULL, home VARCHAR(30), away VARCHAR(30), fixtureNo INT, UNIQUE(leagueID, home, away))");
 			CTH2HFixture.setInt(1,gw);
 			CTH2HFixture.executeUpdate();
 
@@ -1441,11 +1450,11 @@ public class MySQLConnection {
 		try {
 			PreparedStatement SFix;
 			if(leagueID==0) {
-				SFix = conn.prepareStatement("SELECT * FROM H2HGW?");
+				SFix = conn.prepareStatement("SELECT * FROM h2hGW?");
 				SFix.setInt(1, gameweek);
 			}
 			else {
-				SFix = conn.prepareStatement("SELECT * FROM H2HGW? WHERE leagueID = ?");
+				SFix = conn.prepareStatement("SELECT * FROM h2hGW? WHERE leagueID = ?");
 				SFix.setInt(1, gameweek);
 				SFix.setInt(2, leagueID);
 			}
@@ -2024,7 +2033,7 @@ public class MySQLConnection {
 				int x = 0;
 				for(Entry<String,String> gwFixture : gwFixtures.getValue().entrySet()){
 					x++;
-					PreparedStatement insertFixtures = conn.prepareStatement("INSERT INTO h2hgw? (leagueID, home, away, fixtureNo) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE fixtureNo = ?");
+					PreparedStatement insertFixtures = conn.prepareStatement("INSERT INTO h2hGW? (leagueID, home, away, fixtureNo) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE fixtureNo = ?");
 					insertFixtures.setInt(1, gwFixtures.getKey());
 					insertFixtures.setInt(2, h2h.leagueID);
 					insertFixtures.setString(3, gwFixture.getKey());
