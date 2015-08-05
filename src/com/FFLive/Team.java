@@ -34,13 +34,6 @@ import org.jsoup.select.Elements;
 
 public class Team {
 
-	//Creates a Map for the team, filling it with playerID and a captain tag
-	/*public Map <String, String> goalkeeper = new HashMap<String, String>(1);
-	public Map <String, String> defenders = new HashMap<String, String>(5);
-	public Map <String, String> midfield = new HashMap<String, String>(5);
-	public Map <String, String> forwards = new HashMap<String, String>(3);
-	public Map <String, String> bench = new HashMap<String, String>(4);*/
-	//Values initiated as null for a sanity check later on in the program that can be handled if there was a failure or mistake retrieving team data
 	public String[] goalkeeper = {"0"};
 	public String[] defenders = {"0", "0", "0", "0", "0"};
 	public String[] midfield = {"0", "0", "0", "0", "0",};
@@ -61,6 +54,10 @@ public class Team {
 	public int loss = 0;
 	public int draw = 0;
 	public int gameWeekScore;
+	//TODO Find the parts of the page that show this
+	public int tripleCaptian = 0;
+	public int benchBoost = 0;
+	public int allOutAttack = 0;
 	private int timeout = 0;
 
 	public Team(String manID, int gameWeek) {

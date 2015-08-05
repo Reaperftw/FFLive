@@ -1,9 +1,0 @@
-ALTER TABLE playersGW1 ADD teamID INT AFTER teamName;
-ALTER TABLE playersGW2 ADD teamID INT AFTER teamName;
-ALTER TABLE playersGW3 ADD teamID INT AFTER teamName;
-ALTER TABLE playersGW4 ADD teamID INT AFTER teamName;
-ALTER TABLE playersGW5 ADD teamID INT AFTER teamName;
-ALTER TABLE playersGW6 ADD teamID INT AFTER teamName;
-ALTER TABLE playersGW7 ADD teamID INT AFTER teamName;
-ALTER TABLE playersGW8 ADD teamID INT AFTER teamName;
-ALTER TABLE playersGW9 ADD teamID INT AFTER teamName;

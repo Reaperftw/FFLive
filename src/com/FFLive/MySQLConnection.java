@@ -684,7 +684,7 @@ public class MySQLConnection {
 		}
 		return started;
 	}
-
+//TODO store Team Method
 	public void storeTeamGW(Team team, int gw) {
 		try {
 			if(team.managerID.equals("0")) {
@@ -728,7 +728,7 @@ public class MySQLConnection {
 			System.exit(1090);
 		}
 	}
-
+//TODO Store Team Gw
 	public void preStoreTeamGW(Team team, int gw) {
 		try {
 			if(team.managerID.equals("0")) {
@@ -1010,7 +1010,7 @@ public class MySQLConnection {
 			CTleagueTeamsGW.setInt(1, gw);
 			CTleagueTeamsGW.executeUpdate();
 
-			PreparedStatement CTteamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS teamsGW? (managerID INT NOT NULL UNIQUE, teamName VARCHAR(25), managerName VARCHAR(120), op INT DEFAULT 0, gw INT DEFAULT 0, liveOP INT DEFAULT 0, benchScore INT DEFAULT 0, transfers INT DEFAULT 0, deductions INT DEFAULT 0, GkID INT DEFAULT 0, DefID1 INT DEFAULT 0, DefID2 INT DEFAULT 0, DefID3 INT DEFAULT 0, DefID4 INT DEFAULT 0, DefID5 INT DEFAULT 0, MidID1 INT DEFAULT 0, MidID2 INT DEFAULT 0, MidID3 INT DEFAULT 0, MidID4 INT DEFAULT 0, MidID5 INT DEFAULT 0, ForID1 INT DEFAULT 0, ForID2 INT DEFAULT 0, ForID3 INT DEFAULT 0, BenchID1 INT DEFAULT 0, BenchID2 INT DEFAULT 0, BenchID3 INT DEFAULT 0, BenchID4 INT DEFAULT 0, captainID INT DEFAULT 0, viceCaptainID INT DEFAULT 0, transferIn VARCHAR(100) DEFAULT 'NONE', transferOut VARCHAR(100) DEFAULT 'NONE')");
+			PreparedStatement CTteamsGW = conn.prepareStatement("CREATE TABLE IF NOT EXISTS teamsGW? (managerID INT NOT NULL UNIQUE, teamName VARCHAR(25), managerName VARCHAR(120), op INT DEFAULT 0, gw INT DEFAULT 0, liveOP INT DEFAULT 0, benchScore INT DEFAULT 0, transfers INT DEFAULT 0, deductions INT DEFAULT 0, tripleCaptain INT DEFAULT 0 NOT NULL, benchBoost INT DEFAULT 0 NOT NULL, allOutAttack INT DEFAULT 0 NOT NULL, GkID INT DEFAULT 0, DefID1 INT DEFAULT 0, DefID2 INT DEFAULT 0, DefID3 INT DEFAULT 0, DefID4 INT DEFAULT 0, DefID5 INT DEFAULT 0, MidID1 INT DEFAULT 0, MidID2 INT DEFAULT 0, MidID3 INT DEFAULT 0, MidID4 INT DEFAULT 0, MidID5 INT DEFAULT 0, ForID1 INT DEFAULT 0, ForID2 INT DEFAULT 0, ForID3 INT DEFAULT 0, BenchID1 INT DEFAULT 0, BenchID2 INT DEFAULT 0, BenchID3 INT DEFAULT 0, BenchID4 INT DEFAULT 0, captainID INT DEFAULT 0, viceCaptainID INT DEFAULT 0, transferIn VARCHAR(100) DEFAULT 'NONE', transferOut VARCHAR(100) DEFAULT 'NONE')");
 			CTteamsGW.setInt(1, gw);
 			CTteamsGW.executeUpdate();
 
