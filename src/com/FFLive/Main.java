@@ -62,7 +62,7 @@ public class Main {
 		//Initial open
 		Calendar currentDate = Calendar.getInstance();
 		log.ln(4);
-		log.log(4, "FFLive v3.5 - Started " + currentDate.getTime() + "\n", 0);
+		log.log(4, "FFLive v3.6 - Started " + currentDate.getTime() + "\n", 0);
 		log.log(4, "Loading Config...  ",0);
 
 		//Load Config File
