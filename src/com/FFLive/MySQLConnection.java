@@ -684,7 +684,7 @@ public class MySQLConnection {
 		}
 		return started;
 	}
-//TODO store Team Method
+
 	public void storeTeamGW(Team team, int gw) {
 		try {
 			if(team.managerID.equals("0")) {
@@ -700,7 +700,7 @@ public class MySQLConnection {
 				avStatement.close();
 			}
 			else {
-				PreparedStatement IteamsGW = conn.prepareStatement("INSERT INTO teamsGW? (managerID, teamName, managerName, liveOP, gw, transfers, deductions) values (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE teamName = ?, managerName = ?, liveOP = ?, gw = ?, transfers = ?, deductions = ?");
+				PreparedStatement IteamsGW = conn.prepareStatement("INSERT INTO teamsGW? (managerID, teamName, managerName, liveOP, gw, transfers, deductions, tripleCaptain, benchBoost, allOutAttack) values (?, ?, ?, ?, ?, ?, ?, ?, ? ,?) ON DUPLICATE KEY UPDATE teamName = ?, managerName = ?, liveOP = ?, gw = ?, transfers = ?, deductions = ?, tripleCaptain = ?, benchBoost = ?, allOutAttack = ?");
 				IteamsGW.setInt(1, gw);
 				IteamsGW.setString(2, team.managerID);
 				IteamsGW.setString(3, team.teamName);
@@ -709,12 +709,18 @@ public class MySQLConnection {
 				IteamsGW.setInt(6, team.gameWeekScore + team.deductions);
 				IteamsGW.setInt(7, team.transfers);
 				IteamsGW.setInt(8, team.deductions);
-				IteamsGW.setString(9, team.teamName);
-				IteamsGW.setString(10, team.managerName);
-				IteamsGW.setInt(11, team.opScore);
-				IteamsGW.setInt(12, team.gameWeekScore + team.deductions);			
-				IteamsGW.setInt(13, team.transfers);
-				IteamsGW.setInt(14, team.deductions);
+				IteamsGW.setInt(9, team.tripleCaptian);
+				IteamsGW.setInt(10, team.benchBoost);
+				IteamsGW.setInt(11, team.allOutAttack);
+				IteamsGW.setString(12, team.teamName);
+				IteamsGW.setString(13, team.managerName);
+				IteamsGW.setInt(14, team.opScore);
+				IteamsGW.setInt(15, team.gameWeekScore + team.deductions);			
+				IteamsGW.setInt(16, team.transfers);
+				IteamsGW.setInt(17, team.deductions);
+				IteamsGW.setInt(18, team.tripleCaptian);
+				IteamsGW.setInt(19, team.benchBoost);
+				IteamsGW.setInt(20, team.allOutAttack);
 
 				IteamsGW.executeUpdate();
 				IteamsGW.close();
@@ -728,7 +734,7 @@ public class MySQLConnection {
 			System.exit(1090);
 		}
 	}
-//TODO Store Team Gw
+	
 	public void preStoreTeamGW(Team team, int gw) {
 		try {
 			if(team.managerID.equals("0")) {
@@ -1051,7 +1057,7 @@ public class MySQLConnection {
 		Main.log.log(6,"Done!\n",0);
 	}
 
-
+	
 	public void storeTeamData (Team team) {
 
 		try {
@@ -1282,6 +1288,7 @@ public class MySQLConnection {
 		Main.log.log(5,"Generating Player List... Done!                     \r");
 	}
 
+	
 	public void updateScores(int gameweek) {
 
 		Main.log.log(5,"Updating Gameweek Scores...            \r");
@@ -1331,6 +1338,20 @@ public class MySQLConnection {
 						Splayers.close();
 					}
 
+					PreparedStatement STeamData = conn.prepareStatement("SELECT deductions, tripleCaptain, benchBoost FROM teamsGW? WHERE managerID = ?");
+					STeamData.setInt(1, gameweek);
+					STeamData.setInt(2, manId);
+					ResultSet teamData = STeamData.executeQuery();
+
+					int teamDeductions = 0, tripleCaptain = 0, benchBoost = 0;
+					while(teamData.next()) {
+						teamDeductions = teamData.getInt("deductions");
+						tripleCaptain = teamData.getInt("tripleCaptain");
+						benchBoost = teamData.getInt("benchBoost");
+						//allOutAttack = teamData.getInt("allOutAttack");
+					}
+					
+					
 					//Adds on the captain score again, unless Min played = 0 then it adds on the vice captain score
 
 					PreparedStatement captain = conn.prepareStatement("SELECT score, gameweekBreakdown FROM playersGW? JOIN teamsGW? on playersGW?.playerid = teamsGW?.captainID WHERE managerID = ?");
@@ -1346,28 +1367,57 @@ public class MySQLConnection {
 						String capBreakdown = RSScore.getString("gameweekBreakdown");
 						JSONArray breakdown =  (JSONArray)JSONValue.parse(capBreakdown);
 
+						boolean addVCScore = false;
 						for(int x = 0; x<breakdown.size(); x++) {
 							String parts = breakdown.get(x).toString();
 							if(parts.contains("Minutes")) {
 								if(parts.split(",")[1].equals("0")) {
-									//Mins = 0 so double Vice score and add to GW score
-									//System.out.println("True " + parts);
-									PreparedStatement viceCap = conn.prepareStatement("SELECT score from playersGW? JOIN teamsGW? on playersGW?.playerid = teamsGW?.viceCaptainID WHERE managerID = ?");
-									viceCap.setInt(1, gameweek);
-									viceCap.setInt(2, gameweek);
-									viceCap.setInt(3, gameweek);
-									viceCap.setInt(4, gameweek);
-									viceCap.setInt(5, manId);
-									ResultSet RSViceScore = viceCap.executeQuery();
-									while(RSViceScore.next()){								
-										gwScore += RSViceScore.getInt("score");
-									}
-									viceCap.close();
+									//Mins = 0 Set boolean to true for now, if there is another Minutes Played that != 0 then it will be set back to false
+									//If there are two Mins Played == 0 then it will still be true and therefore add on VC Score
+									Main.log.ln(9);
+									Main.log.log(9,("Mins = 0 addVC Set True"));
+									addVCScore = true;
+									
 								}
 								else {
-									//System.out.println("False " + parts);
-									gwScore += capScore;
+									//Mins != 0 So Set boolean to False
+									Main.log.ln(9);
+									Main.log.log(9,("Mins != 0 addVC Set False and Break"));
+									addVCScore = false;
+									break;
 								}
+							}
+						}
+						if(addVCScore) {
+							Main.log.ln(9);
+							Main.log.log(9,("Adding VC Score not Cap"));
+							PreparedStatement viceCap = conn.prepareStatement("SELECT score from playersGW? JOIN teamsGW? on playersGW?.playerid = teamsGW?.viceCaptainID WHERE managerID = ?");
+							viceCap.setInt(1, gameweek);
+							viceCap.setInt(2, gameweek);
+							viceCap.setInt(3, gameweek);
+							viceCap.setInt(4, gameweek);
+							viceCap.setInt(5, manId);
+							ResultSet RSViceScore = viceCap.executeQuery();
+							while(RSViceScore.next()){								
+								gwScore += RSViceScore.getInt("score");
+								if(tripleCaptain ==1) {
+									//Player Has Played Triple Captain - Add Score Again
+									Main.log.ln(9);
+									Main.log.log(9, "Triple Captain, Adding VC Score Again");
+									gwScore += RSViceScore.getInt("score");
+								}
+							}
+							viceCap.close();
+						}
+						else {
+							Main.log.ln(9);
+							Main.log.log(9,("Adding Captain Score"));
+							gwScore += capScore;
+							if(tripleCaptain == 1) {
+								//Triple Captain Played
+								Main.log.ln(9);
+								Main.log.log(9, "Triple Captain, Adding VC Score Again");
+								gwScore += capScore;
 							}
 						}
 
@@ -1375,17 +1425,9 @@ public class MySQLConnection {
 					RSScore.close();
 
 					//Check for transfer Deductions and apply them.
-					PreparedStatement STransfers = conn.prepareStatement("SELECT deductions FROM teamsGW? WHERE managerID = ?");
-					STransfers.setInt(1, gameweek);
-					STransfers.setInt(2, manId);
-					ResultSet transfers = STransfers.executeQuery();
+					gwScore += teamDeductions;
 
-					while(transfers.next()) {
-						gwScore += transfers.getInt("deductions");
-					}
-					STransfers.close();
-
-					//Add bench scores up for stats
+					//Add bench scores up for stats or BenchBoost
 					int benchScore = 0;
 					PreparedStatement Sbench = conn.prepareStatement("SELECT score from playersGW? JOIN teamsGW? ON playersGW?.playerid = teamsGW?.BenchID1 OR playersGW?.playerid = teamsGW?.BenchID2 "
 							+ "OR playersGW?.playerid = teamsGW?.BenchID3 OR playersGW?.playerid = teamsGW?.BenchID4 WHERE managerID = ?");
@@ -1404,6 +1446,12 @@ public class MySQLConnection {
 
 					while(benchPlayers.next()) {
 						benchScore += benchPlayers.getInt("score");
+					}
+					//If Player Has Used Bench Boost
+					if(benchBoost == 1) {
+						Main.log.ln(9);
+						Main.log.log(9, "BenchBoost, Adding Bench Score");
+						gwScore += benchScore;
 					}
 
 					//Update Scores
@@ -1670,6 +1718,8 @@ public class MySQLConnection {
 
 	}
 
+	//TODO Scores
+	
 	public void postBenchScores(int gw) {
 
 		Main.log.log(5, "Updating Bench Scores...                   \r");
